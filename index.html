@@ -31,6 +31,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .total{background:var(--card);border-radius:16px;padding:10px 14px;flex:1;text-align:left}
 .total .lbl{font-size:12px;color:var(--muted);letter-spacing:.02em}
 .total .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.mrow{display:flex;gap:18px;margin-top:4px;flex-wrap:wrap}
+.mrow div{display:flex;flex-direction:column}
+.mrow b{font-size:21px;font-variant-numeric:tabular-nums;font-weight:700}
+.mrow small{font-size:11.5px;color:var(--muted)}
+.neg{color:#ff6b74}.pos{color:var(--green)}
+.q{border:1px solid #5a4a1e}
+.qbtns{display:flex;gap:8px;margin-top:8px}
+.qbtns button{flex:1;background:var(--card2);border-radius:10px;padding:9px 6px;font-size:13.5px;font-weight:600}
+.qbtns button.y{background:var(--red)}
 .total .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:17px}
 
@@ -100,8 +109,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <p>Вставьте код из Telegram-бота (команда <b>/app</b>) и выберите, кто вы.</p>
   <textarea id="code" placeholder="Код подключения"></textarea>
   <div class="chips" id="whoChips">
-    <button class="chip" data-n="Серёжа">Серёжа</button>
-    <button class="chip" data-n="Жена">Жена</button>
+    <button class="chip" data-n="Сергей">Сергей</button>
+    <button class="chip" data-n="Юлия">Юлия</button>
   </div>
   <input id="whoName" placeholder="Ваше имя" maxlength="30">
   <button class="btn" id="saveCfg">Готово</button>
@@ -112,9 +121,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div id="main" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
   <div class="top">
     <button class="total" id="totalBtn">
-      <div class="lbl">ВСЕГО ДЕНЕГ</div>
-      <div class="val" id="totalVal">—</div>
-      <div class="sub" id="totalSub">нажмите, чтобы увидеть кошельки</div>
+      <div class="lbl" id="mLbl">В ЭТОМ МЕСЯЦЕ</div>
+      <div class="mrow">
+        <div><b class="neg" id="mSpent">—</b><small>потрачено</small></div>
+        <div><b class="pos" id="mEarned">—</b><small>заработано</small></div>
+        <div><b id="mToday">—</b><small>сегодня</small></div>
+      </div>
+      <div class="sub" id="totalSub">нажмите, чтобы увидеть остатки</div>
     </button>
     <button class="who" id="whoBtn" title="Сменить пользователя">?</button>
   </div>
@@ -152,6 +165,7 @@ let cfg = LS.get('cfg', null);
 let queue = LS.get('queue', []);
 let feed = LS.get('feed', []);
 let state = LS.get('state', null);
+let questions = LS.get('questions', []);
 
 /* ---------- подключение по ссылке #c=КОД ---------- */
 function decodeCode(code){
@@ -164,7 +178,7 @@ function decodeCode(code){
 }
 const hm = location.hash.match(/c=([\w\-=]+)/);
 if (hm) { $('code').value = hm[1]; history.replaceState(null, '', location.pathname + location.search); }
-if (DEMO && !cfg) cfg = { u: 'demo', k: 'demo', who: 'Серёжа' };
+if (DEMO && !cfg) cfg = { u: 'demo', k: 'demo', who: 'Сергей' };
 
 /* ---------- экран настройки ---------- */
 function showSetup(){
@@ -200,11 +214,19 @@ $('totalBtn').onclick = () => $('details').classList.toggle('hidden');
 const fmt = n => (Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 function renderState(){
   if (!state) return;
-  const prb = state.totals.find(t => t.cur === 'PRB'), usd = state.totals.find(t => t.cur === 'USD');
-  $('totalVal').textContent = prb ? fmt(prb.v) + ' р. ПМР' : '—';
-  $('totalSub').textContent = state.totals.filter(t => t.cur !== 'PRB')
-    .map(t => t.sym === '$' || t.sym === '€' ? t.sym + fmt(t.v) : fmt(t.v) + ' ' + t.sym).join(' · ');
-  let h = '<div class="sec">Кошельки</div>';
+  const M = state.month;
+  if (M) {
+    $('mLbl').textContent = ('В ' + M.name.replace(/^в /, '')).toUpperCase() + ' · ' + M.sym;
+    $('mSpent').textContent = '−' + fmt(M.spent);
+    $('mEarned').textContent = '+' + fmt(M.earned);
+    $('mToday').textContent = '−' + fmt(M.today);
+  }
+  const prb = state.totals.find(t => t.cur === 'PRB');
+  $('totalSub').textContent = 'Всего денег: ' + (prb ? fmt(prb.v) + ' р. ПМР' : '—') + ' · ' + state.totals.filter(t => t.cur === 'USD' || t.cur === 'EUR')
+    .map(t => t.sym + fmt(t.v)).join(' · ');
+  let h = '<div class="sec">Всего в каждой валюте</div>';
+  state.totals.forEach(t => h += `<div class="row"><span>${esc(t.sym)}</span><b>${t.sym === '$' || t.sym === '€' ? esc(t.sym) + fmt(t.v) : fmt(t.v) + ' ' + esc(t.sym)}</b></div>`);
+  h += '<div class="sec">Кошельки</div>';
   state.wallets.forEach(w => { if (Math.abs(w.bal) > 0.001) h += `<div class="row"><span>${esc(w.name)}</span><b>${fmt(w.bal)} ${esc(w.sym)}</b></div>`; });
   if (state.debts && state.debts.length) {
     h += '<div class="sec">Долги</div>';
@@ -220,13 +242,16 @@ function renderState(){
 function renderFeed(){
   const box = $('feed');
   const pend = queue.map(q => ({ pending: true, label: q.label, cid: q.cid, err: q.err }));
-  const items = pend.concat(feed.slice(0, 6));
+  const qs = questions.map(q => ({ question: true, ...q }));
+  const items = qs.concat(pend, feed.slice(0, 6));
   box.innerHTML = items.map(it => {
+    if (it.question) return `<div class="item q"><div class="t">⚠️ <b>Похоже, уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(it.line)}</div><div class="m">Уже есть: ${esc(it.dupLine)}</div><div class="m">Это дополнение или то же самое?</div><div class="qbtns"><button class="y" data-pid="${it.pid}" data-k="1">➕ Дополнение</button><button data-pid="${it.pid}" data-k="0">🗑 То же самое</button></div></div></div>`;
     if (it.pending) return `<div class="item pending ${it.err ? 'err' : ''}"><div class="spin"></div><div class="t">${esc(it.label)}<div class="m">${it.err ? 'нет связи — отправлю, когда появится' : 'обрабатываю…'}</div></div></div>`;
     if (it.reply) return `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time)}</div></div></div>`;
     return `<div class="item" style="${it.undone ? 'opacity:.4;text-decoration:line-through' : ''}"><div class="t">${esc(it.line)}<div class="m">${esc(it.time)} · #${it.id}</div></div>${it.undone ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
   }).join('');
   box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
+  box.querySelectorAll('.qbtns button').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
 }
 
 /* ---------- сеть ---------- */
@@ -255,6 +280,7 @@ async function flush(){
       const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       if (j.items && j.items.length) j.items.slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, time }));
       if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time });
+      if (j.pending && j.pending.length) { questions = questions.concat(j.pending); LS.set('questions', questions); }
       feed = feed.slice(0, 20); LS.set('feed', feed);
       if (j.state) { state = j.state; LS.set('state', state); renderState(); }
       renderFeed();
@@ -269,6 +295,23 @@ function enqueue(item){
   item.cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   item.ts = Date.now();
   queue.push(item); saveQueue(); renderFeed(); flush();
+}
+async function answer(pid, keep){
+  const q = questions.find(x => x.pid === pid);
+  questions = questions.filter(x => x.pid !== pid); LS.set('questions', questions); renderFeed();
+  try {
+    const j = await api({ action: 'confirm', pid, keep });
+    const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    if (j.items && j.items.length) j.items.forEach(it => feed.unshift({ id: it.id, line: it.line, time }));
+    else feed.unshift({ reply: 'Не записал — это дубль', time });
+    LS.set('feed', feed);
+    if (j.state) { state = j.state; LS.set('state', state); renderState(); }
+    renderFeed();
+  } catch(e) {
+    if (e.fatal) { toast(e.message); return; }
+    if (q) { questions.unshift(q); LS.set('questions', questions); renderFeed(); }
+    toast('Нет связи, попробуйте ещё раз');
+  }
 }
 async function undo(id){
   const it = feed.find(f => f.id === id); if (it) { it.undone = true; LS.set('feed', feed); renderFeed(); }
@@ -389,13 +432,15 @@ let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t) { t
 
 /* ---------- демо-режим для превью ---------- */
 function demoApi(b){
-  const st = state || { wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
+  const st = state || { month: { name: 'ноябре', spent: 6240, earned: 25000, today: 350, sym: 'р. ПМР' }, wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
     totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 1001 }, { cur: 'RUB', sym: '₽', v: 97920 }, { cur: 'MDL', sym: 'лей', v: 19040 }],
-    recent: [{ line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Жена', date: '02.11 18:40' }],
+    recent: [{ line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', date: '02.11 18:40' }],
     debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
   return new Promise(r => setTimeout(() => {
     if (b.action === 'add') { const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
+      if (b.kind === 'text' && /кварт/i.test(b.text)) return r({ ok: true, items: [], pending: [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11, записал(а) Сергей)' }], state: st });
       r({ ok: true, items: [{ id: Math.floor(Math.random() * 900 + 100), line: l }], state: st }); }
+    else if (b.action === 'confirm') r({ ok: true, items: b.keep ? [{ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира' }] : [], state: st });
     else r({ ok: true, state: st });
   }, b.action === 'add' ? 1400 : 200));
 }
