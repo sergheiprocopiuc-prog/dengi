@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Деньги">
+<meta name="theme-color" content="#0c0c10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Деньги</title>
+<style>
+:root{
+  --bg:#0c0c10; --card:#17171d; --card2:#1f1f27; --line:#2a2a33;
+  --text:#f4f4f6; --muted:#8b8b98; --red:#ff3b47; --red2:#d91f2c;
+  --green:#34c77b; --amber:#ffb340;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,sans-serif;
+  -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+body{display:flex;flex-direction:column;padding:calc(var(--safe-t) + 12px) 16px calc(var(--safe-b) + 12px)}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+/* верх */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.total{background:var(--card);border-radius:16px;padding:10px 14px;flex:1;text-align:left}
+.total .lbl{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.total .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.total .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:17px}
+
+/* детали */
+.details{background:var(--card);border-radius:16px;margin-top:10px;padding:6px 14px;max-height:42vh;overflow:auto}
+.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;gap:10px}
+.row:last-child{border-bottom:0}
+.row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.sec{font-size:12px;color:var(--muted);padding:10px 0 2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* кнопка */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;position:relative}
+.mic{width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ff6670,var(--red) 45%,var(--red2));
+  box-shadow:0 18px 50px -10px rgba(255,59,71,.55),inset 0 -8px 20px rgba(0,0,0,.25);
+  display:grid;place-items:center;touch-action:none;transition:transform .12s ease;position:relative;z-index:2}
+.mic svg{width:34%;height:34%;fill:#fff;pointer-events:none}
+.mic.rec{transform:scale(1.08)}
+.ring{position:absolute;width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;border:3px solid var(--red);opacity:0;z-index:1}
+.rec-on .ring{animation:pulse 1.4s ease-out infinite}
+.rec-on .ring.r2{animation-delay:.7s}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
+.hint{margin-top:26px;color:var(--muted);font-size:15px;text-align:center;min-height:22px}
+.timer{font-variant-numeric:tabular-nums;color:var(--text);font-weight:600}
+
+/* нижние кнопки */
+.actions{display:flex;gap:10px}
+.act{flex:1;background:var(--card);border-radius:16px;padding:15px 10px;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.act:active,.total:active{background:var(--card2)}
+.textbar{display:flex;gap:8px;margin-top:10px}
+.textbar input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--text);
+  font:inherit;font-size:17px;padding:13px 14px;outline:none;-webkit-user-select:text;user-select:text}
+.textbar input:focus{border-color:var(--red)}
+.send{background:var(--red);border-radius:14px;width:52px;font-weight:700;font-size:20px}
+
+/* лента */
+.feed{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:30vh;overflow:auto}
+.item{background:var(--card);border-radius:14px;padding:11px 12px;font-size:14.5px;display:flex;gap:10px;align-items:flex-start}
+.item .t{flex:1}
+.item .m{font-size:12px;color:var(--muted);margin-top:2px}
+.item.pending{opacity:.75}
+.item.err{border:1px solid #5a2328}
+.undo{color:var(--muted);font-size:13px;padding:2px 4px;white-space:nowrap}
+.spin{width:14px;height:14px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;margin-top:3px;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* настройка */
+.setup{flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;max-width:460px;margin:0 auto;width:100%}
+.setup h1{font-size:28px;margin:0}
+.setup p{color:var(--muted);margin:0;font-size:15px}
+.setup textarea,.setup input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--text);
+  font:inherit;padding:13px 14px;outline:none;-webkit-user-select:text;user-select:text}
+.setup textarea{height:90px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--card);border-radius:999px;padding:9px 16px;font-weight:600}
+.chip.on{background:var(--red)}
+.btn{background:var(--red);border-radius:14px;padding:15px;font-weight:700;font-size:17px}
+.note{background:var(--card);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 90px);transform:translateX(-50%);background:#2b2b35;padding:10px 16px;border-radius:12px;font-size:14px;z-index:9;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ======= НАСТРОЙКА ======= -->
+<div id="setup" class="setup hidden">
+  <h1>Деньги 💸</h1>
+  <p>Вставьте код из Telegram-бота (команда <b>/app</b>) и выберите, кто вы.</p>
+  <textarea id="code" placeholder="Код подключения"></textarea>
+  <div class="chips" id="whoChips">
+    <button class="chip" data-n="Серёжа">Серёжа</button>
+    <button class="chip" data-n="Жена">Жена</button>
+  </div>
+  <input id="whoName" placeholder="Ваше имя" maxlength="30">
+  <button class="btn" id="saveCfg">Готово</button>
+  <div class="note" id="a2hs">Чтобы открывалось как приложение: в Safari нажмите «Поделиться» → «На экран Домой».</div>
+</div>
+
+<!-- ======= ГЛАВНЫЙ ЭКРАН ======= -->
+<div id="main" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
+  <div class="top">
+    <button class="total" id="totalBtn">
+      <div class="lbl">ВСЕГО ДЕНЕГ</div>
+      <div class="val" id="totalVal">—</div>
+      <div class="sub" id="totalSub">нажмите, чтобы увидеть кошельки</div>
+    </button>
+    <button class="who" id="whoBtn" title="Сменить пользователя">?</button>
+  </div>
+  <div class="details hidden" id="details"></div>
+
+  <div class="stage" id="stage">
+    <div class="ring"></div><div class="ring r2"></div>
+    <button class="mic" id="mic" aria-label="Записать голос">
+      <svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6.5-3.6a.9.9 0 1 0-1.8 0 4.7 4.7 0 0 1-9.4 0 .9.9 0 1 0-1.8 0 6.5 6.5 0 0 0 5.6 6.4V20H8.9a.9.9 0 1 0 0 1.8h6.2a.9.9 0 1 0 0-1.8h-2.2v-2.2a6.5 6.5 0 0 0 5.6-6.4z"/></svg>
+    </button>
+    <div class="hint" id="hint">Зажмите и скажите, на что потратили</div>
+  </div>
+
+  <div class="actions">
+    <button class="act" id="photoBtn">📷 Чек</button>
+    <button class="act" id="textBtn">⌨️ Текст</button>
+  </div>
+  <form class="textbar hidden" id="textbar">
+    <input id="textIn" placeholder="магазин 1000" autocomplete="off" enterkeyhint="send">
+    <button class="send" type="submit">↑</button>
+  </form>
+  <input type="file" id="photoIn" accept="image/*" capture="environment" class="hidden">
+  <div class="feed" id="feed"></div>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+};
+const DEMO = /[?&]demo\b/.test(location.search);
+let cfg = LS.get('cfg', null);
+let queue = LS.get('queue', []);
+let feed = LS.get('feed', []);
+let state = LS.get('state', null);
+
+/* ---------- подключение по ссылке #c=КОД ---------- */
+function decodeCode(code){
+  code = (code || '').trim().replace(/\s+/g, '');
+  const b = code.replace(/-/g, '+').replace(/_/g, '/');
+  const json = decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))));
+  const o = JSON.parse(json);
+  if (!o.u || !o.k) throw new Error('bad');
+  return o;
+}
+const hm = location.hash.match(/c=([\w\-=]+)/);
+if (hm) { $('code').value = hm[1]; history.replaceState(null, '', location.pathname + location.search); }
+if (DEMO && !cfg) cfg = { u: 'demo', k: 'demo', who: 'Серёжа' };
+
+/* ---------- экран настройки ---------- */
+function showSetup(){
+  $('main').classList.add('hidden'); $('setup').classList.remove('hidden');
+  if (window.navigator.standalone) $('a2hs').classList.add('hidden');
+  if (cfg && cfg.who) $('whoName').value = cfg.who;
+}
+document.querySelectorAll('#whoChips .chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#whoChips .chip').forEach(x => x.classList.remove('on'));
+  c.classList.add('on'); $('whoName').value = c.dataset.n;
+});
+$('saveCfg').onclick = () => {
+  let o;
+  try { o = $('code').value.trim() ? decodeCode($('code').value) : (cfg ? { u: cfg.u, k: cfg.k } : null); }
+  catch(e){ return toast('Код не подходит. Скопируйте его из бота ещё раз.'); }
+  if (!o) return toast('Вставьте код из бота');
+  const who = $('whoName').value.trim();
+  if (!who) return toast('Укажите, кто вы');
+  cfg = { u: o.u, k: o.k, who };
+  LS.set('cfg', cfg);
+  showMain(); refresh();
+};
+
+/* ---------- главный экран ---------- */
+function showMain(){
+  $('setup').classList.add('hidden'); $('main').classList.remove('hidden');
+  $('whoBtn').textContent = (cfg.who || '?').slice(0, 1).toUpperCase();
+  renderState(); renderFeed();
+}
+$('whoBtn').onclick = showSetup;
+$('totalBtn').onclick = () => $('details').classList.toggle('hidden');
+
+const fmt = n => (Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+function renderState(){
+  if (!state) return;
+  const prb = state.totals.find(t => t.cur === 'PRB'), usd = state.totals.find(t => t.cur === 'USD');
+  $('totalVal').textContent = prb ? fmt(prb.v) + ' р. ПМР' : '—';
+  $('totalSub').textContent = state.totals.filter(t => t.cur !== 'PRB')
+    .map(t => t.sym === '$' || t.sym === '€' ? t.sym + fmt(t.v) : fmt(t.v) + ' ' + t.sym).join(' · ');
+  let h = '<div class="sec">Кошельки</div>';
+  state.wallets.forEach(w => { if (Math.abs(w.bal) > 0.001) h += `<div class="row"><span>${esc(w.name)}</span><b>${fmt(w.bal)} ${esc(w.sym)}</b></div>`; });
+  if (state.debts && state.debts.length) {
+    h += '<div class="sec">Долги</div>';
+    state.debts.forEach(d => h += `<div class="row"><span>${esc(d.line)}</span></div>`);
+  }
+  if (state.recent && state.recent.length) {
+    h += '<div class="sec">Последние</div>';
+    state.recent.forEach(r => h += `<div class="row"><span>${esc(r.line)}<br><small style="color:var(--muted)">${esc(r.who)} · ${esc(r.date)}</small></span></div>`);
+  }
+  $('details').innerHTML = h;
+}
+
+function renderFeed(){
+  const box = $('feed');
+  const pend = queue.map(q => ({ pending: true, label: q.label, cid: q.cid, err: q.err }));
+  const items = pend.concat(feed.slice(0, 6));
+  box.innerHTML = items.map(it => {
+    if (it.pending) return `<div class="item pending ${it.err ? 'err' : ''}"><div class="spin"></div><div class="t">${esc(it.label)}<div class="m">${it.err ? 'нет связи — отправлю, когда появится' : 'обрабатываю…'}</div></div></div>`;
+    if (it.reply) return `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time)}</div></div></div>`;
+    return `<div class="item" style="${it.undone ? 'opacity:.4;text-decoration:line-through' : ''}"><div class="t">${esc(it.line)}<div class="m">${esc(it.time)} · #${it.id}</div></div>${it.undone ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
+  }).join('');
+  box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
+}
+
+/* ---------- сеть ---------- */
+async function api(body){
+  if (DEMO) return demoApi(body);
+  const r = await fetch(cfg.u, { method: 'POST', body: JSON.stringify(Object.assign({ k: cfg.k, who: cfg.who }, body)),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  if (!j.ok && j.error) { const e = new Error(j.error); e.fatal = true; throw e; }
+  return j;
+}
+async function refresh(){
+  try { const j = await api({ action: 'state' }); state = j.state; LS.set('state', state); renderState(); } catch(e){}
+}
+function saveQueue(){ if (!LS.set('queue', queue)) LS.set('queue', queue.filter(q => !q.data)); }
+let busy = false;
+async function flush(){
+  if (busy || !queue.length) return;
+  busy = true;
+  while (queue.length) {
+    const q = queue[0];
+    try {
+      const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts });
+      queue.shift(); saveQueue();
+      const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      if (j.items && j.items.length) j.items.slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, time }));
+      if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time });
+      feed = feed.slice(0, 20); LS.set('feed', feed);
+      if (j.state) { state = j.state; LS.set('state', state); renderState(); }
+      renderFeed();
+    } catch(e) {
+      if (e.fatal) { queue.shift(); saveQueue(); toast(e.message); renderFeed(); continue; }
+      q.err = true; renderFeed(); break;
+    }
+  }
+  busy = false;
+}
+function enqueue(item){
+  item.cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  item.ts = Date.now();
+  queue.push(item); saveQueue(); renderFeed(); flush();
+}
+async function undo(id){
+  const it = feed.find(f => f.id === id); if (it) { it.undone = true; LS.set('feed', feed); renderFeed(); }
+  try { const j = await api({ action: 'undo', id }); if (j.state) { state = j.state; LS.set('state', state); renderState(); } }
+  catch(e){ if (it) { it.undone = false; renderFeed(); } toast('Не получилось отменить, нет связи'); }
+}
+window.addEventListener('online', flush);
+setInterval(flush, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg) { flush(); refresh(); } });
+
+/* ---------- запись голоса (WAV 16 кГц) ---------- */
+let rec = null, tapMode = false, downAt = 0, timerInt = null;
+const mic = $('mic'), stage = $('stage'), hint = $('hint');
+const HINT = 'Зажмите и скажите, на что потратили';
+
+async function startRec(){
+  if (rec) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    const chunks = [];
+    proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    src.connect(proc); proc.connect(ctx.destination);
+    rec = { stream, ctx, src, proc, chunks, rate: ctx.sampleRate, t0: Date.now() };
+    mic.classList.add('rec'); stage.classList.add('rec-on');
+    timerInt = setInterval(() => {
+      const s = Math.floor((Date.now() - rec.t0) / 1000);
+      hint.innerHTML = (tapMode ? 'Нажмите, чтобы отправить · ' : 'Отпустите, чтобы отправить · ') + `<span class="timer">${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</span>`;
+      if (s >= 90) stopRec(true);
+    }, 200);
+  } catch(e) {
+    rec = null;
+    toast('Нет доступа к микрофону. Разрешите его в настройках Safari.');
+  }
+}
+function stopRec(send){
+  if (!rec) return;
+  const r = rec; rec = null; tapMode = false;
+  clearInterval(timerInt); hint.textContent = HINT;
+  mic.classList.remove('rec'); stage.classList.remove('rec-on');
+  try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
+  r.stream.getTracks().forEach(t => t.stop());
+  r.ctx.close && r.ctx.close();
+  const dur = (Date.now() - r.t0) / 1000;
+  if (!send) return;
+  if (dur < 0.8) return toast('Слишком коротко — зажмите и говорите');
+  const wav = encodeWav(r.chunks, r.rate, 16000);
+  enqueue({ kind: 'voice', mime: 'audio/wav', data: wav, label: '🎙 Голосовое · ' + Math.round(dur) + ' с' });
+}
+function encodeWav(chunks, inRate, outRate){
+  let len = 0; chunks.forEach(c => len += c.length);
+  const all = new Float32Array(len); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
+  const ratio = inRate / outRate, outLen = Math.floor(len / ratio);
+  const pcm = new Int16Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const s = Math.floor(i * ratio), e = Math.min(Math.floor((i + 1) * ratio), len);
+    let sum = 0; for (let j = s; j < e; j++) sum += all[j];
+    const v = Math.max(-1, Math.min(1, sum / Math.max(1, e - s)));
+    pcm[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+  }
+  const buf = new ArrayBuffer(44 + pcm.length * 2), dv = new DataView(buf);
+  const ws = (p, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(p + i, s.charCodeAt(i)); };
+  ws(0, 'RIFF'); dv.setUint32(4, 36 + pcm.length * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, outRate, true); dv.setUint32(28, outRate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  ws(36, 'data'); dv.setUint32(40, pcm.length * 2, true);
+  new Int16Array(buf, 44).set(pcm);
+  return b64(new Uint8Array(buf));
+}
+function b64(bytes){ let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
+
+mic.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (rec && tapMode) { stopRec(true); return; }
+  downAt = Date.now(); startRec();
+});
+const up = () => {
+  if (!rec && !downAt) return;
+  const held = Date.now() - downAt; downAt = 0;
+  if (held < 350) { tapMode = true; return; }   // короткое нажатие — режим «нажал–говори–нажал»
+  if (!tapMode) stopRec(true);
+};
+mic.addEventListener('pointerup', up);
+mic.addEventListener('pointercancel', up);
+mic.addEventListener('contextmenu', e => e.preventDefault());
+
+/* ---------- фото чека ---------- */
+$('photoBtn').onclick = () => $('photoIn').click();
+$('photoIn').onchange = async () => {
+  const f = $('photoIn').files[0]; $('photoIn').value = '';
+  if (!f) return;
+  try {
+    const img = await loadImg(f);
+    const max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    const data = cv.toDataURL('image/jpeg', 0.82).split(',')[1];
+    enqueue({ kind: 'photo', mime: 'image/jpeg', data, label: '🧾 Фото чека' });
+  } catch(e){ toast('Не удалось прочитать фото'); }
+};
+function loadImg(file){ return new Promise((res, rej) => { const u = URL.createObjectURL(file), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); res(i); }; i.onerror = rej; i.src = u; }); }
+
+/* ---------- текст ---------- */
+$('textBtn').onclick = () => { $('textbar').classList.toggle('hidden'); if (!$('textbar').classList.contains('hidden')) $('textIn').focus(); };
+$('textbar').onsubmit = e => {
+  e.preventDefault();
+  const t = $('textIn').value.trim(); if (!t) return;
+  $('textIn').value = '';
+  enqueue({ kind: 'text', text: t, label: '⌨️ ' + t });
+};
+
+/* ---------- мелочи ---------- */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
+let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = m; t.classList.remove('hidden'); clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 3200); }
+
+/* ---------- демо-режим для превью ---------- */
+function demoApi(b){
+  const st = state || { wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
+    totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 1001 }, { cur: 'RUB', sym: '₽', v: 97920 }, { cur: 'MDL', sym: 'лей', v: 19040 }],
+    recent: [{ line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Жена', date: '02.11 18:40' }],
+    debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
+  return new Promise(r => setTimeout(() => {
+    if (b.action === 'add') { const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
+      r({ ok: true, items: [{ id: Math.floor(Math.random() * 900 + 100), line: l }], state: st }); }
+    else r({ ok: true, state: st });
+  }, b.action === 'add' ? 1400 : 200));
+}
+
+/* ---------- старт ---------- */
+if (cfg) { showMain(); refresh(); flush(); } else showSetup();
+if ('serviceWorker' in navigator && !DEMO && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
