@@ -7,107 +7,162 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Деньги">
-<meta name="theme-color" content="#0c0c10">
+<meta name="theme-color" content="#0a0909">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Деньги</title>
 <style>
+/* Тёмная тема в цветах логотипа: чёрный, красный, золото. Только системные шрифты — открывается мгновенно */
 :root{
-  --bg:#0c0c10; --card:#17171d; --card2:#1f1f27; --line:#2a2a33;
-  --text:#f4f4f6; --muted:#8b8b98; --red:#ff3b47; --red2:#d91f2c;
-  --green:#34c77b; --amber:#ffb340;
-  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --bg:#0a0909; --s1:#151312; --s2:#1e1b19; --s3:#27231f; --line:#2c2724;
+  --text:#f6f1ea; --muted:#968c83; --dim:#6f665f;
+  --red:#e3141f; --red-hi:#ff525a; --red-lo:#9e0b12;
+  --gold:#dcaa6a; --gold-lo:#8f6a3c; --green:#46d08c; --amber:#f0b54a;
+  --r:18px; --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,sans-serif;
-  -webkit-user-select:none;user-select:none;overscroll-behavior:none}
-body{display:flex;flex-direction:column;padding:calc(var(--safe-t) + 12px) 16px calc(var(--safe-b) + 12px)}
+html,body{margin:0;height:100%;color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  -webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(130% 55% at 50% 108%,rgba(227,20,31,.13),transparent 62%),
+  radial-gradient(80% 40% at 100% -5%,rgba(220,170,106,.07),transparent 60%),var(--bg);
+  display:flex;flex-direction:column;
+  padding:calc(var(--st) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(var(--sb) + 12px) max(16px,env(safe-area-inset-left,0px))}
+body.ny{padding-top:calc(var(--st) + 26px)}
 .hidden{display:none!important}
-button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
 
-/* верх */
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.total{background:var(--card);border-radius:16px;padding:10px 14px;flex:1;text-align:left}
-.total .lbl{font-size:12px;color:var(--muted);letter-spacing:.02em}
-.total .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
-.mrow{display:flex;gap:18px;margin-top:4px;flex-wrap:wrap}
-.mrow div{display:flex;flex-direction:column}
-.mrow b{font-size:21px;font-variant-numeric:tabular-nums;font-weight:700}
-.mrow small{font-size:11.5px;color:var(--muted)}
-.neg{color:#ff6b74}.pos{color:var(--green)}
-.q{border:1px solid #5a4a1e}
-.qbtns{display:flex;gap:8px;margin-top:8px}
-.qbtns button{flex:1;background:var(--card2);border-radius:10px;padding:9px 6px;font-size:13.5px;font-weight:600}
-.qbtns button.y{background:var(--red)}
-.total .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tab{flex:1;background:var(--card);border-radius:14px;padding:12px 8px;font-weight:600;font-size:15px}
-.tab.on{background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
-.who{flex:none;width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:17px}
+/* шапка */
+.app{position:relative;z-index:1;display:flex;flex-direction:column;flex:1;min-height:0}
+.hdr{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:9px;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.brand{flex:1;display:flex;flex-direction:column;line-height:1.15}
+.brand b{font-size:19px;letter-spacing:-.01em}
+.brand small{font-size:11.5px;color:var(--muted)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:1px}
+.dot.off{background:var(--amber)}
+.who{width:38px;height:38px;border-radius:50%;background:var(--s2);border:1px solid var(--line);font-weight:700;color:var(--gold)}
 
-/* детали */
-.details{background:var(--card);border-radius:16px;margin-top:10px;padding:6px 14px;max-height:42vh;overflow:auto}
-.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;gap:10px}
-.row:last-child{border-bottom:0}
-.row b{font-variant-numeric:tabular-nums;white-space:nowrap}
-.sec{font-size:12px;color:var(--muted);padding:10px 0 2px;text-transform:uppercase;letter-spacing:.06em}
+/* вкладки */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:5px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 4px;border-radius:12px;font-size:14px;font-weight:600;color:var(--muted);transition:background .15s,color .15s}
+.seg button i{font-style:normal;font-size:16px}
+.seg button.on{background:var(--s3);color:var(--text);box-shadow:inset 0 0 0 1px rgba(220,170,106,.35)}
 
-/* кнопка */
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;position:relative}
-.mic{width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#ff6670,var(--red) 45%,var(--red2));
-  box-shadow:0 18px 50px -10px rgba(255,59,71,.55),inset 0 -8px 20px rgba(0,0,0,.25);
-  display:grid;place-items:center;touch-action:none;transition:transform .12s ease;position:relative;z-index:2}
-.mic svg{width:34%;height:34%;fill:#fff;pointer-events:none}
-.mic.rec{transform:scale(1.08)}
-.ring{position:absolute;width:min(62vw,250px);height:min(62vw,250px);border-radius:50%;border:3px solid var(--red);opacity:0;z-index:1}
-.rec-on .ring{animation:pulse 1.4s ease-out infinite}
-.rec-on .ring.r2{animation-delay:.7s}
-@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
-.hint{margin-top:26px;color:var(--muted);font-size:15px;text-align:center;min-height:22px}
-.timer{font-variant-numeric:tabular-nums;color:var(--text);font-weight:600}
+/* рабочая зона */
+.work{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;position:relative}
+.mic{width:min(60vw,240px);height:min(60vw,240px);border-radius:50%;position:relative;z-index:2;touch-action:none;
+  background:radial-gradient(circle at 34% 28%,#ff6b72 0%,var(--red) 46%,var(--red-lo) 100%);
+  box-shadow:0 0 0 7px rgba(220,170,106,.07),0 0 0 8px rgba(220,170,106,.18),0 22px 60px -12px rgba(227,20,31,.6),inset 0 -10px 24px rgba(0,0,0,.28);
+  display:grid;place-items:center;transition:transform .12s ease}
+.mic svg{width:32%;height:32%;fill:#fff;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.mic.rec{transform:scale(1.07)}
+.ring{position:absolute;width:min(60vw,240px);height:min(60vw,240px);border-radius:50%;border:2px solid var(--red-hi);opacity:0;z-index:1}
+.rec-on .ring{animation:pulse 1.4s ease-out infinite}.rec-on .ring.r2{animation-delay:.7s}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.hint{margin-top:24px;color:var(--muted);font-size:15px;text-align:center;min-height:22px}
+.timer{color:var(--text);font-weight:600}
 
-/* нижние кнопки */
-.actions{display:flex;gap:10px}
-.act{flex:1;background:var(--card);border-radius:16px;padding:15px 10px;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
-.act:active,.total:active{background:var(--card2)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.act{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px 10px;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.act:active,.seg button:active,.who:active{background:var(--s3)}
 .textbar{display:flex;gap:8px;margin-top:10px}
-.textbar input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--text);
+.textbar input{flex:1;min-width:0;background:var(--s1);border:1px solid var(--line);border-radius:14px;color:var(--text);
   font:inherit;font-size:17px;padding:13px 14px;outline:none;-webkit-user-select:text;user-select:text}
-.textbar input:focus{border-color:var(--red)}
+.textbar input:focus{border-color:var(--gold-lo)}
 .send{background:var(--red);border-radius:14px;width:52px;font-weight:700;font-size:20px}
 
 /* лента */
-.feed{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:30vh;overflow:auto}
-.item{background:var(--card);border-radius:14px;padding:11px 12px;font-size:14.5px;display:flex;gap:10px;align-items:flex-start}
-.item .t{flex:1}
-.item .m{font-size:12px;color:var(--muted);margin-top:2px}
-.item.pending{opacity:.75}
-.item.err{border:1px solid #5a2328}
+.feed{margin-top:10px;display:flex;flex-direction:column;gap:8px;max-height:30vh;overflow:auto}
+.item{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:11px 12px;font-size:14.5px;display:flex;gap:10px;align-items:flex-start}
+.item .t{flex:1;min-width:0}
+.item .m{font-size:12px;color:var(--muted);margin-top:3px}
+.item.wait{border-color:#4a3a1e}
+.item.bad{border-color:#5a2328}
+.item.q{border-color:#5d4826}
+.ib{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ib button{background:var(--s3);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600}
+.ib button.y{background:var(--red)}
+.ib button.warn{background:#5a2328}
 .undo{color:var(--muted);font-size:13px;padding:2px 4px;white-space:nowrap}
-.spin{width:14px;height:14px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;margin-top:3px;flex:none}
+.spin{width:14px;height:14px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;margin-top:3px;flex:none}
+.ico{flex:none;width:16px;text-align:center;margin-top:1px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* выдвижная панель (кошелёк / история / конвертер) */
+.sheet{position:absolute;inset:10px 0 0;z-index:5;background:var(--s1);border:1px solid var(--line);border-radius:20px;
+  overflow:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 16px;animation:up .2s ease-out;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+@keyframes up{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.sh-h{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);padding:12px 0 8px;z-index:1}
+.sh-h b{font-size:17px}
+.x{width:32px;height:32px;border-radius:50%;background:var(--s3);color:var(--muted);font-size:15px}
+.sec{font-size:11.5px;color:var(--gold);padding:14px 0 4px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px;gap:10px}
+.row:last-child{border-bottom:0}
+.row b{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--s2);border-radius:14px;padding:11px 10px}
+.stat b{display:block;font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat small{font-size:11.5px;color:var(--muted)}
+.neg{color:var(--red-hi)}.pos{color:var(--green)}
+.log{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid var(--line)}
+.log:last-child{border-bottom:0}
+.log .a{font-size:14px}.log .d{font-size:14px;color:var(--text);opacity:.92}.log small{color:var(--muted);font-size:12px}
+
+/* конвертер */
+.cv{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.cv:last-of-type{border-bottom:0}
+.cc{flex:none;width:40px;height:40px;border-radius:12px;background:var(--s2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--gold);font-size:15px}
+.cn{flex:1;min-width:0;display:flex;flex-direction:column;font-size:15px;font-weight:600}
+.cn small{font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.cv input{width:44%;min-width:0;text-align:right;background:var(--s2);border:1px solid var(--line);border-radius:12px;color:var(--text);
+  font:inherit;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;padding:10px 12px;outline:none;-webkit-user-select:text;user-select:text}
+.cv input:focus{border-color:var(--gold)}
+.cv-note{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.cv-note button{color:var(--gold);font-size:13px;font-weight:600}
+
 /* настройка */
-.setup{flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;max-width:460px;margin:0 auto;width:100%}
-.setup h1{font-size:28px;margin:0}
+.setup{flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;max-width:460px;margin:0 auto;width:100%;position:relative;z-index:1}
+.setup h1{font-size:28px;margin:0;display:flex;align-items:center;gap:10px}
 .setup p{color:var(--muted);margin:0;font-size:15px}
-.setup textarea,.setup input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--text);
+.setup textarea,.setup input{width:100%;background:var(--s1);border:1px solid var(--line);border-radius:14px;color:var(--text);
   font:inherit;padding:13px 14px;outline:none;-webkit-user-select:text;user-select:text}
 .setup textarea{height:90px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{background:var(--card);border-radius:999px;padding:9px 16px;font-weight:600}
-.chip.on{background:var(--red)}
+.chip{background:var(--s1);border:1px solid var(--line);border-radius:999px;padding:9px 18px;font-weight:600}
+.chip.on{background:var(--red);border-color:var(--red)}
 .btn{background:var(--red);border-radius:14px;padding:15px;font-weight:700;font-size:17px}
-.note{background:var(--card);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted)}
-.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 90px);transform:translateX(-50%);background:#2b2b35;padding:10px 16px;border-radius:12px;font-size:14px;z-index:9;max-width:90vw;text-align:center}
+.note{background:var(--s1);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(var(--sb) + 90px);transform:translateX(-50%);background:#2e2926;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;max-width:90vw;text-align:center}
+
+/* ===== праздники ===== */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.flake{position:absolute;top:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:var(--o);
+  filter:blur(.4px);animation:fall var(--d) linear var(--l) infinite;will-change:transform}
+@keyframes fall{0%{transform:translate3d(0,-2vh,0)}50%{transform:translate3d(var(--w),50vh,0)}100%{transform:translate3d(0,104vh,0)}}
+.garland{position:fixed;left:0;right:0;top:calc(var(--st) + 2px);height:22px;z-index:30;pointer-events:none;display:flex;justify-content:space-around;padding:0 6px}
+.garland::before{content:"";position:absolute;left:0;right:0;top:-6px;height:16px;
+  background:repeating-radial-gradient(ellipse 40px 14px at 20px -4px,transparent 0 12px,rgba(170,140,100,.55) 12.5px 13.5px,transparent 14px);background-size:40px 16px}
+.bulb{position:relative;width:7px;height:11px;border-radius:50% 50% 45% 45%;margin-top:7px;background:var(--c);
+  box-shadow:0 0 8px 1px var(--c);animation:blink 1.8s ease-in-out var(--l) infinite alternate}
+.bulb:nth-child(odd){margin-top:4px}
+.bulb::before{content:"";position:absolute;top:-3px;left:1.5px;width:4px;height:3px;border-radius:1px;background:#5a4c3a}
+@keyframes blink{0%{opacity:.35;box-shadow:0 0 2px 0 var(--c)}100%{opacity:1;box-shadow:0 0 10px 2px var(--c)}}
+.heart{position:absolute;bottom:-40px;left:var(--x);font-size:var(--s);color:var(--c);opacity:.85;animation:rise var(--d) ease-in var(--l) infinite;will-change:transform}
+@keyframes rise{0%{transform:translate3d(0,0,0) rotate(-10deg);opacity:0}10%{opacity:.9}50%{transform:translate3d(var(--w),-55vh,0) rotate(12deg)}100%{transform:translate3d(0,-112vh,0) rotate(-8deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.flake,.heart,.bulb{animation:none}.flake,.heart{display:none}}
 </style>
 </head>
 <body>
+<div id="fx" aria-hidden="true"></div>
 
 <!-- ======= НАСТРОЙКА ======= -->
 <div id="setup" class="setup hidden">
-  <h1>Деньги 💸</h1>
+  <h1><img src="apple-touch-icon.png" class="logo" alt="">Деньги</h1>
   <p>Вставьте код из Telegram-бота (команда <b>/app</b>) и выберите, кто вы.</p>
   <textarea id="code" placeholder="Код подключения"></textarea>
   <div class="chips" id="whoChips">
@@ -120,41 +175,40 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 </div>
 
 <!-- ======= ГЛАВНЫЙ ЭКРАН ======= -->
-<div id="main" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
-  <div class="top">
-    <button class="tab" id="walletBtn">👛 Показать кошелёк</button>
-    <button class="tab" id="histBtn">📜 История</button>
-    <button class="who" id="whoBtn" title="Сменить пользователя">?</button>
-  </div>
-  <div class="details hidden" id="walletPanel">
-    <div class="lbl" id="mLbl" style="font-size:12px;color:var(--muted);padding-top:10px">В ЭТОМ МЕСЯЦЕ</div>
-    <div class="mrow" style="padding-bottom:6px">
-      <div><b class="neg" id="mSpent">—</b><small>потрачено</small></div>
-      <div><b class="pos" id="mEarned">—</b><small>заработано</small></div>
-      <div><b id="mToday">—</b><small>сегодня</small></div>
+<div id="main" class="app hidden">
+  <header class="hdr">
+    <img src="apple-touch-icon.png" class="logo" alt="">
+    <div class="brand"><b>Деньги <span id="sIcon"></span></b><small id="net"><span class="dot"></span>на связи</small></div>
+    <button class="who" id="whoBtn" aria-label="Сменить пользователя">?</button>
+  </header>
+  <nav class="seg">
+    <button id="tab-w" data-p="w"><i>💰</i><span>Кошелёк</span></button>
+    <button id="tab-h" data-p="h"><i>📜</i><span>История</span></button>
+    <button id="tab-c" data-p="c"><i>💱</i><span>Конвертер</span></button>
+  </nav>
+
+  <div class="work">
+    <section class="sheet hidden" id="sheet"></section>
+
+    <div class="stage" id="stage">
+      <div class="ring"></div><div class="ring r2"></div>
+      <button class="mic" id="mic" aria-label="Записать голос">
+        <svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6.5-3.6a.9.9 0 1 0-1.8 0 4.7 4.7 0 0 1-9.4 0 .9.9 0 1 0-1.8 0 6.5 6.5 0 0 0 5.6 6.4V20H8.9a.9.9 0 1 0 0 1.8h6.2a.9.9 0 1 0 0-1.8h-2.2v-2.2a6.5 6.5 0 0 0 5.6-6.4z"/></svg>
+      </button>
+      <div class="hint" id="hint">Зажмите и скажите, на что потратили</div>
     </div>
-    <div id="details"></div>
-  </div>
-  <div class="details hidden" id="histPanel"></div>
 
-  <div class="stage" id="stage">
-    <div class="ring"></div><div class="ring r2"></div>
-    <button class="mic" id="mic" aria-label="Записать голос">
-      <svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6.5-3.6a.9.9 0 1 0-1.8 0 4.7 4.7 0 0 1-9.4 0 .9.9 0 1 0-1.8 0 6.5 6.5 0 0 0 5.6 6.4V20H8.9a.9.9 0 1 0 0 1.8h6.2a.9.9 0 1 0 0-1.8h-2.2v-2.2a6.5 6.5 0 0 0 5.6-6.4z"/></svg>
-    </button>
-    <div class="hint" id="hint">Зажмите и скажите, на что потратили</div>
+    <div class="actions">
+      <button class="act" id="photoBtn">📷 Чек</button>
+      <button class="act" id="textBtn">⌨️ Текст</button>
+    </div>
+    <form class="textbar hidden" id="textbar">
+      <input id="textIn" placeholder="магазин 1000" autocomplete="off" enterkeyhint="send">
+      <button class="send" type="submit" aria-label="Отправить">↑</button>
+    </form>
+    <input type="file" id="photoIn" accept="image/*" capture="environment" class="hidden">
+    <div class="feed" id="feed"></div>
   </div>
-
-  <div class="actions">
-    <button class="act" id="photoBtn">📷 Чек</button>
-    <button class="act" id="textBtn">⌨️ Текст</button>
-  </div>
-  <form class="textbar hidden" id="textbar">
-    <input id="textIn" placeholder="магазин 1000" autocomplete="off" enterkeyhint="send">
-    <button class="send" type="submit">↑</button>
-  </form>
-  <input type="file" id="photoIn" accept="image/*" capture="environment" class="hidden">
-  <div class="feed" id="feed"></div>
 </div>
 
 <script>
@@ -165,17 +219,70 @@ const LS = {
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
 };
 const DEMO = /[?&]demo\b/.test(location.search);
+const FORCE_SEASON = (location.search.match(/[?&]season=(\w+)/) || [])[1] || '';
 let cfg = LS.get('cfg', null);
-let queue = LS.get('queue', []);
 let feed = LS.get('feed', []);
 let state = LS.get('state', null);
+let queue = [];                       // то, что ещё не дошло до сервера (хранится в IndexedDB)
 
-/* ---------- подключение по ссылке #c=КОД ---------- */
+/* ================= праздничные украшения ================= */
+(function decorate(){
+  const d = new Date(), m = d.getMonth() + 1, day = d.getDate();
+  const s = FORCE_SEASON || ((m === 11 && day >= 15) || m === 12 || (m === 1 && day <= 15) ? 'ny' : (m === 2 && day === 14) ? 'val' : '');
+  const fx = $('fx'), r = (a, b) => a + Math.random() * (b - a);
+  if (s === 'ny') {
+    document.body.classList.add('ny');
+    $('sIcon').textContent = '🎄';
+    let h = '';
+    for (let i = 0; i < 36; i++) h += `<i class="flake" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(2.5, 6).toFixed(1)}px;--o:${r(.35, .85).toFixed(2)};--d:${r(9, 18).toFixed(1)}s;--l:-${r(0, 18).toFixed(1)}s;--w:${r(-28, 28).toFixed(0)}px"></i>`;
+    fx.innerHTML = h;
+    const g = document.createElement('div'); g.className = 'garland'; g.setAttribute('aria-hidden', 'true');
+    const cols = ['#ff525a', '#ffd166', '#46d08c', '#6fb6ff', '#dcaa6a'];
+    let b = ''; for (let i = 0; i < 18; i++) b += `<i class="bulb" style="--c:${cols[i % cols.length]};--l:-${(i * .37 % 1.8).toFixed(2)}s"></i>`;
+    g.innerHTML = b; document.body.appendChild(g);
+  } else if (s === 'val') {
+    $('sIcon').textContent = '💘';
+    const cols = ['#ff525a', '#ff7a9a', '#e3141f', '#ffb3c4'];
+    let h = '';
+    for (let i = 0; i < 16; i++) h += `<i class="heart" style="--x:${r(0, 95).toFixed(1)}%;--s:${r(14, 30).toFixed(0)}px;--c:${cols[i % 4]};--d:${r(7, 13).toFixed(1)}s;--l:-${r(0, 13).toFixed(1)}s;--w:${r(-40, 40).toFixed(0)}px">❤</i>`;
+    fx.innerHTML = h;
+  }
+})();
+
+/* ================= хранилище очереди (IndexedDB — не теряется при закрытии) ================= */
+const IDB = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('dengi', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('q', { keyPath: 'cid' });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('q', mode), req = fn(t.objectStore('q'));
+      t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  };
+  return { all: () => tx('readonly', s => s.getAll()), put: v => tx('readwrite', s => s.put(v)), del: k => tx('readwrite', s => s.delete(k)) };
+})();
+async function persist(q){ try { await IDB.put(q); } catch(e){ LS.set('queue_fallback', queue); } }
+async function unpersist(cid){ try { await IDB.del(cid); } catch(e){ LS.set('queue_fallback', queue); } }
+async function loadQueue(){
+  let items = [];
+  try { items = await IDB.all() || []; } catch(e){}
+  const old = LS.get('queue', []).concat(LS.get('queue_fallback', []));   // перенос из старой версии
+  old.forEach(o => { if (o && o.cid && !items.find(x => x.cid === o.cid)) { items.push(o); persist(o); } });
+  try { localStorage.removeItem('queue'); localStorage.removeItem('queue_fallback'); } catch(e){}
+  items.forEach(q => { q.status = q.status === 'sending' ? 'retry' : q.status; q.next = 0; });
+  queue = items.sort((a, b) => a.ts - b.ts);
+}
+
+/* ================= подключение ================= */
 function decodeCode(code){
   code = (code || '').trim().replace(/\s+/g, '');
   const b = code.replace(/-/g, '+').replace(/_/g, '/');
-  const json = decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))));
-  const o = JSON.parse(json);
+  const o = JSON.parse(decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4)))));
   if (!o.u || !o.k) throw new Error('bad');
   return o;
 }
@@ -183,7 +290,6 @@ const hm = location.hash.match(/c=([\w\-=]+)/);
 if (hm) { $('code').value = hm[1]; history.replaceState(null, '', location.pathname + location.search); }
 if (DEMO && !cfg) cfg = { u: 'demo', k: 'demo', who: 'Сергей' };
 
-/* ---------- экран настройки ---------- */
 function showSetup(){
   $('main').classList.add('hidden'); $('setup').classList.remove('hidden');
   if (window.navigator.standalone) $('a2hs').classList.add('hidden');
@@ -202,157 +308,250 @@ $('saveCfg').onclick = () => {
   if (!who) return toast('Укажите, кто вы');
   cfg = { u: o.u, k: o.k, who };
   LS.set('cfg', cfg);
-  showMain(); refresh();
+  queue.forEach(q => { if (q.status === 'auth') { q.status = 'retry'; q.next = 0; } });
+  showMain(); refresh(); flush(true);
 };
 
-/* ---------- главный экран ---------- */
+/* ================= главный экран ================= */
 function showMain(){
   $('setup').classList.add('hidden'); $('main').classList.remove('hidden');
   $('whoBtn').textContent = (cfg.who || '?').slice(0, 1).toUpperCase();
-  renderState(); renderFeed();
+  renderAll();
 }
 $('whoBtn').onclick = showSetup;
-function togglePanel(which){
-  const w = $('walletPanel'), hp = $('histPanel');
-  const openW = which === 'w' ? w.classList.contains('hidden') : false;
-  const openH = which === 'h' ? hp.classList.contains('hidden') : false;
-  w.classList.toggle('hidden', !openW); hp.classList.toggle('hidden', !openH);
-  $('walletBtn').classList.toggle('on', openW); $('histBtn').classList.toggle('on', openH);
-  $('walletBtn').textContent = openW ? '👛 Скрыть кошелёк' : '👛 Показать кошелёк';
-  if (openW || openH) refresh();
-}
-$('walletBtn').onclick = () => togglePanel('w');
-$('histBtn').onclick = () => togglePanel('h');
 
-const fmt = n => (Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-function renderState(){
-  if (!state) return;
-  renderFeed();
-  const M = state.month;
-  if (M) {
-    $('mLbl').textContent = ('В ' + M.name.replace(/^в /, '')).toUpperCase() + ' · ' + M.sym;
-    $('mSpent').textContent = '−' + fmt(M.spent);
-    $('mEarned').textContent = '+' + fmt(M.earned);
-    $('mToday').textContent = '−' + fmt(M.today);
-  }
-  let h = '<div class="sec">Всего в каждой валюте</div>';
-  state.totals.forEach(t => h += `<div class="row"><span>${esc(t.sym)}</span><b>${t.sym === '$' || t.sym === '€' ? esc(t.sym) + fmt(t.v) : fmt(t.v) + ' ' + esc(t.sym)}</b></div>`);
-  h += '<div class="sec">Кошельки</div>';
-  state.wallets.forEach(w => { if (Math.abs(w.bal) > 0.001) h += `<div class="row"><span>${esc(w.name)}</span><b>${fmt(w.bal)} ${esc(w.sym)}</b></div>`; });
-  if (state.debts && state.debts.length) {
-    h += '<div class="sec">Долги</div>';
-    state.debts.forEach(d => h += `<div class="row"><span>${esc(d.line)}</span></div>`);
-  }
-  $('details').innerHTML = h;
-  renderHistory();
+let panel = '';
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => openPanel(panel === b.dataset.p ? '' : b.dataset.p));
+function openPanel(p){
+  panel = p;
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+  $('sheet').classList.toggle('hidden', !p);
+  renderPanel();
+  if (p === 'w' || p === 'h') refresh();
 }
 
-// Лента = общие записи с сервера (из приложения, бота и команды iPhone у обоих) + то, что ещё отправляется
-let answered = new Set(), undoing = new Set();
-function renderFeed(){
-  const box = $('feed');
-  const now = Date.now();
-  const pend = queue.map(q => ({ pending: true, label: q.label, err: q.err }));
-  const qs = ((state && state.pending) || []).filter(q => !answered.has(q.pid)).map(q => ({ question: true, ...q }));
-  const replies = feed.filter(f => now - (f.ts || 0) < 5 * 60000).slice(0, 3);
-  const byId = {}; ((state && state.recent) || []).forEach(r => byId[r.id] = r);
-  const fresh = replies.map(f => f.id && byId[f.id] ? byId[f.id] : f);
-  const items = qs.concat(pend, fresh);
-  box.innerHTML = items.map(itemHtml).join('');
-  bindItems(box);
+const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const money = (v, sym) => sym === '$' || sym === '€' ? sym + fmt(v) : fmt(v) + ' ' + sym;
+const head = t => `<div class="sh-h"><b>${t}</b><button class="x" data-close aria-label="Закрыть">✕</button></div>`;
+
+function renderPanel(){
+  const sh = $('sheet');
+  if (!panel) { sh.innerHTML = ''; return; }
+  if (panel === 'w') sh.innerHTML = walletHtml();
+  if (panel === 'h') sh.innerHTML = historyHtml();
+  if (panel === 'c') { if (!sh.querySelector('.cv')) { sh.innerHTML = converterHtml(); bindConverter(); } else updateConverterRates(); }
+  const x = sh.querySelector('[data-close]'); if (x) x.onclick = () => openPanel('');
 }
-// Журнал: что записали, отменили, исправили — у обоих одинаковый, только для чтения
-function renderHistory(){
-  const hp = $('histPanel');
+
+function walletHtml(){
+  if (!state) return head('💰 Кошелёк') + '<div class="row"><span>Загружаю…</span></div>';
+  const M = state.month || {};
+  let h = head('💰 Кошелёк');
+  h += `<div class="sec">${esc(('В ' + (M.name || 'этом месяце')).replace(/^В в /, 'В '))} · ${esc(M.sym || '')}</div>
+    <div class="stats"><div class="stat"><b class="neg">−${fmt(M.spent || 0)}</b><small>потрачено</small></div>
+    <div class="stat"><b class="pos">+${fmt(M.earned || 0)}</b><small>заработано</small></div>
+    <div class="stat"><b>−${fmt(M.today || 0)}</b><small>сегодня</small></div></div>`;
+  h += '<div class="sec">Всего денег</div>';
+  (state.totals || []).forEach(t => h += `<div class="row"><span>${esc(curName(t.cur))}</span><b>${money(t.v, t.sym)}</b></div>`);
+  const ws = (state.wallets || []).filter(w => Math.abs(w.bal) > 0.001);
+  if (ws.length) { h += '<div class="sec">Кошельки</div>'; ws.forEach(w => h += `<div class="row"><span>${esc(w.name)}</span><b>${fmt(w.bal)} ${esc(w.sym)}</b></div>`); }
+  if (state.debts && state.debts.length) { h += '<div class="sec">Долги</div>'; state.debts.forEach(d => h += `<div class="row"><span>${esc(d.line)}</span></div>`); }
+  return h;
+}
+function historyHtml(){
   const log = (state && state.log) || [];
-  hp.innerHTML = '<div class="sec">Журнал · Сергей и Юлия · последние ' + log.length + '</div>' +
-    (log.length ? log.map(e => `<div class="row" style="flex-direction:column;gap:2px"><span><b style="font-weight:600">${esc(e.a)}</b> · ${esc(e.who)} ${e.id ? '<span style="color:var(--muted)">' + esc(e.id) + '</span>' : ''}</span><span style="font-size:14px">${esc(e.d)}</span><small style="color:var(--muted)">${esc(e.t)}${e.src ? ' · ' + esc(e.src) : ''}</small></div>`).join('')
+  return head('📜 История') + '<div class="sec">Сергей и Юлия · последние ' + log.length + '</div>' +
+    (log.length ? log.map(e => `<div class="log"><span class="a"><b>${esc(e.a)}</b> · ${esc(e.who)} <span style="color:var(--muted)">${esc(e.id || '')}</span></span><span class="d">${esc(e.d)}</span><small>${esc(e.t)}${e.src ? ' · ' + esc(e.src) : ''}</small></div>`).join('')
       : '<div class="row"><span>Пока пусто</span></div>');
 }
-function bindItems(box){
-  box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
-  box.querySelectorAll('.qbtns button').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
+
+/* ================= конвертер ================= */
+const CURS = [['USD', '$', 'Доллар'], ['EUR', '€', 'Евро'], ['RUB', '₽', 'Рубль РФ'], ['MDL', 'L', 'Молдавский лей'], ['PRB', 'р.', 'Рубль ПМР']];
+const curName = c => (CURS.find(x => x[0] === c) || [c, c, c])[2];
+function getRates(){
+  const r = (state && state.rates) || LS.get('rates', null) || { USD: 1, EUR: .9, RUB: 80, MDL: 18, PRB: 16.1 };
+  return r;
 }
-function itemHtml(it){
-  {
-    if (it.question) return `<div class="item q"><div class="t">⚠️ <b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(it.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(it.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="qbtns"><button class="y" data-pid="${it.pid}" data-k="1">➕ Другая</button><button data-pid="${it.pid}" data-k="0">🗑 То же самое</button></div></div></div>`;
-    if (it.pending) return `<div class="item pending ${it.err ? 'err' : ''}"><div class="spin"></div><div class="t">${esc(it.label)}<div class="m">${it.err ? 'нет связи — отправлю, когда появится' : 'обрабатываю…'}</div></div></div>`;
-    if (it.reply) return `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time)}</div></div></div>`;
-    const x = it.x || undoing.has(it.id);
-    return `<div class="item" style="${x ? 'opacity:.4' : ''}"><div class="t"><span style="${x ? 'text-decoration:line-through' : ''}">${esc(it.line)}</span><div class="m">${esc(it.who)}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date)} · #${it.id}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div></div>${x ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
-  }
+const nf = (v, d) => { if (!isFinite(v)) return ''; const s = v.toFixed(d).replace(/\.?0+$/, ''); const [i, f] = s.split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? ',' + f : ''); };
+function converterHtml(){
+  let h = head('💱 Конвертер');
+  CURS.forEach(([c, sym, name]) => h += `<label class="cv"><span class="cc">${sym}</span><span class="cn">${name}<small data-r="${c}"></small></span><input data-c="${c}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`);
+  h += `<div class="cv-note"><span id="cvDate"></span><button id="cvClear">Очистить</button></div>`;
+  return h;
+}
+let cvLast = null;
+function updateConverterRates(){
+  const R = getRates();
+  document.querySelectorAll('[data-r]').forEach(el => { const c = el.dataset.r; el.textContent = c === 'USD' ? '1 € = ' + nf(1 / R.EUR, 3) + ' $' : '1 $ = ' + nf(R[c], R[c] < 10 ? 3 : 2) + ' ' + (CURS.find(x => x[0] === c) || [])[1]; });
+  const d = $('cvDate'); if (d) d.textContent = (state && state.ratesAt ? 'Курсы на ' + state.ratesAt : 'Курсы сохранённые') + ' · ПМР — из таблицы';
+  if (cvLast) recalc(cvLast);
+}
+function recalc(src){
+  const R = getRates(), raw = src.value.replace(/\s/g, '').replace(',', '.');
+  const v = parseFloat(raw);
+  document.querySelectorAll('.cv input').forEach(inp => {
+    if (inp === src) return;
+    if (!raw || isNaN(v)) { inp.value = ''; return; }
+    const usd = v / R[src.dataset.c];
+    inp.value = nf(usd * R[inp.dataset.c], 2);
+  });
+}
+function bindConverter(){
+  document.querySelectorAll('.cv input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      let s = inp.value.replace(/[^\d.,\s]/g, '');
+      if (s !== inp.value) inp.value = s;
+      cvLast = inp; recalc(inp);
+    });
+    inp.addEventListener('focus', () => { inp.select && setTimeout(() => inp.select(), 0); });
+  });
+  $('cvClear').onclick = () => { document.querySelectorAll('.cv input').forEach(i => i.value = ''); cvLast = null; };
+  updateConverterRates();
 }
 
-/* ---------- сеть ---------- */
-async function api(body){
+/* ================= лента на главном ================= */
+let answered = new Set(), undoing = new Set(), delArmed = null;
+function renderFeed(){
+  const box = $('feed'), now = Date.now();
+  const qs = ((state && state.pending) || []).filter(q => !answered.has(q.pid));
+  const byId = {}; ((state && state.recent) || []).forEach(r => byId[r.id] = r);
+  const fresh = feed.filter(f => now - (f.ts || 0) < 5 * 60000).slice(0, 3).map(f => f.id && byId[f.id] ? byId[f.id] : f);
+  let h = '';
+  qs.forEach(q => h += `<div class="item q"><div class="t">⚠️ <b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(q.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(q.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="ib"><button class="y" data-pid="${q.pid}" data-k="1">➕ Другая</button><button data-pid="${q.pid}" data-k="0">🗑 То же самое</button></div></div></div>`);
+  queue.forEach(q => h += queueHtml(q));
+  fresh.forEach(it => {
+    if (it.reply) { h += `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time || '')}</div></div></div>`; return; }
+    const x = it.x || undoing.has(it.id);
+    h += `<div class="item" style="${x ? 'opacity:.45' : ''}"><div class="t"><span style="${x ? 'text-decoration:line-through' : ''}">${esc(it.line)}</span><div class="m">${esc(it.who || '')}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date || '')} · #${it.id}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div></div>${x ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
+  });
+  box.innerHTML = h;
+  box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
+  box.querySelectorAll('[data-pid]').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
+  box.querySelectorAll('[data-retry]').forEach(b => b.onclick = () => { const q = queue.find(x => x.cid === b.dataset.retry); if (q) { q.next = 0; q.status = 'retry'; } flush(true); });
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeQueued(b.dataset.del));
+  renderNet();
+}
+function queueHtml(q){
+  const s = q.status || 'new', tries = q.tries || 0;
+  const sending = s === 'sending' || s === 'new';
+  const slow = s === 'sending' && Date.now() - (q.sentAt || 0) > 12000;
+  let ico = '<div class="spin"></div>', cls = 'wait', msg = '';
+  if (sending) msg = slow ? 'сервер распознаёт… ещё пара секунд' : 'отправляю…';
+  else if (s === 'busy') msg = 'сервер ещё обрабатывает — дождусь ответа';
+  else if (s === 'auth') { ico = '<span class="ico">⚠️</span>'; cls = 'bad'; msg = 'нет доступа — нажмите кнопку с буквой вверху и вставьте код из бота заново. Запись сохранена.'; }
+  else { ico = '<span class="ico">⏳</span>'; msg = (q.err ? 'не получилось (' + esc(q.err) + ')' : 'нет связи') + ' — сохранено на телефоне, отправлю сам' + (tries ? ' · попытка ' + tries : ''); }
+  const btns = sending || s === 'busy' ? '' : `<div class="ib"><button data-retry="${q.cid}">↻ Отправить сейчас</button><button class="${delArmed === q.cid ? 'warn' : ''}" data-del="${q.cid}">${delArmed === q.cid ? 'Точно удалить?' : '✕'}</button></div>`;
+  return `<div class="item ${cls}">${ico}<div class="t">${esc(q.label)}<div class="m">${msg}</div>${btns}</div></div>`;
+}
+function renderNet(){
+  const off = navigator.onLine === false, n = queue.length;
+  $('net').innerHTML = `<span class="dot ${off ? 'off' : ''}"></span>${off ? 'нет интернета' : 'на связи'}${n ? ' · в очереди ' + n : ''}`;
+}
+function renderAll(){ renderFeed(); renderPanel(); }
+
+/* ================= сеть ================= */
+async function api(body, timeoutMs, ctrl){
   if (DEMO) return demoApi(body);
-  const r = await fetch(cfg.u, { method: 'POST', body: JSON.stringify(Object.assign({ k: cfg.k, who: cfg.who }, body)),
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const j = await r.json();
-  if (!j.ok && j.error) { const e = new Error(j.error); e.fatal = true; throw e; }
-  return j;
+  ctrl = ctrl || new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), timeoutMs || 20000);
+  try {
+    const r = await fetch(cfg.u, { method: 'POST', body: JSON.stringify(Object.assign({ k: cfg.k, who: cfg.who }, body)),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', signal: ctrl.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(tm); }
 }
+function setState(s){ if (!s) return; state = s; LS.set('state', s); if (s.rates) LS.set('rates', s.rates); renderAll(); }
+let refreshing = false;
 async function refresh(){
-  try { const j = await api({ action: 'state' }); state = j.state; LS.set('state', state); renderState(); } catch(e){}
+  if (refreshing || !cfg) return; refreshing = true;
+  try { const j = await api({ action: 'state' }, 20000); if (j.ok !== false) setState(j.state); } catch(e){}
+  refreshing = false;
 }
-function saveQueue(){ if (!LS.set('queue', queue)) LS.set('queue', queue.filter(q => !q.data)); }
-let busy = false;
-async function flush(){
-  if (busy || !queue.length) return;
-  busy = true;
-  while (queue.length) {
-    const q = queue[0];
-    try {
-      const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts });
-      queue.shift(); saveQueue();
+
+/* --- очередь отправки: по одной записи, с таймаутом и автоповтором; сама ничего не удаляет --- */
+const BACKOFF = [3, 8, 15, 30, 60, 120];
+let sending = null;
+async function flush(force){
+  if (sending || !cfg) return;
+  const now = Date.now();
+  const q = queue.find(x => x.status !== 'auth' && (force || !x.next || x.next <= now));
+  if (!q) { renderNet(); return; }
+  const ctrl = new AbortController();
+  sending = { cid: q.cid, ctrl, t0: now };
+  q.status = 'sending'; q.sentAt = now; q.err = '';
+  renderFeed();
+  const slowTick = setTimeout(renderFeed, 12500);
+  try {
+    const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts }, 120000, ctrl);
+    if (j.busy) { q.status = 'busy'; q.next = Date.now() + 6000; }
+    else if (j.ok) {
+      queue = queue.filter(x => x.cid !== q.cid); await unpersist(q.cid);
       const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      if (j.items && j.items.length) j.items.slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, who: cfg.who, date: time, ts: Date.now() }));
+      (j.items || []).slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, who: cfg.who, date: time, ts: Date.now() }));
       if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time, ts: Date.now() });
       feed = feed.slice(0, 10); LS.set('feed', feed);
-      if (j.state) { state = j.state; LS.set('state', state); renderState(); }
-      renderFeed();
-    } catch(e) {
-      if (e.fatal) { queue.shift(); saveQueue(); toast(e.message); renderFeed(); continue; }
-      q.err = true; renderFeed(); break;
-    }
+      if (j.state) setState(j.state);
+    } else if (j.code === 'auth') { q.status = 'auth'; }
+    else { q.tries = (q.tries || 0) + 1; q.status = 'retry'; q.err = 'ошибка сервера'; q.next = Date.now() + BACKOFF[Math.min(q.tries - 1, BACKOFF.length - 1)] * 1000; }
+  } catch(e) {
+    q.tries = (q.tries || 0) + 1; q.status = 'retry'; q.err = '';
+    q.next = ctrl.manual ? 0 : Date.now() + BACKOFF[Math.min(q.tries - 1, BACKOFF.length - 1)] * 1000;
   }
-  busy = false;
+  clearTimeout(slowTick);
+  sending = null;
+  if (queue.includes(q)) await persist(q);
+  renderFeed();
+  if (queue.some(x => x.status !== 'auth' && (!x.next || x.next <= Date.now()))) setTimeout(flush, 300);
 }
-function enqueue(item){
+async function enqueue(item){
   item.cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  item.ts = Date.now();
-  queue.push(item); saveQueue(); renderFeed(); flush();
+  item.ts = Date.now(); item.status = 'new'; item.tries = 0; item.next = 0;
+  queue.push(item); renderFeed();
+  await persist(item);        // сначала сохраняем на телефоне, потом отправляем
+  flush();
 }
+async function removeQueued(cid){
+  if (delArmed !== cid) { delArmed = cid; renderFeed(); setTimeout(() => { if (delArmed === cid) { delArmed = null; renderFeed(); } }, 3500); return; }
+  delArmed = null;
+  if (sending && sending.cid === cid) { sending.ctrl.manual = true; sending.ctrl.abort(); }
+  queue = queue.filter(x => x.cid !== cid); await unpersist(cid); renderFeed();
+}
+// Вернулись в приложение / появился интернет: зависшую отправку обрываем и повторяем сразу (сервер не запишет дважды)
+function wake(){
+  if (!cfg) return;
+  if (sending && Date.now() - sending.t0 > 4000) { sending.ctrl.manual = true; sending.ctrl.abort(); }
+  queue.forEach(q => { if (q.status !== 'auth') q.next = 0; });
+  setTimeout(() => flush(true), 50);
+  refresh();
+}
+window.addEventListener('online', () => { renderNet(); wake(); });
+window.addEventListener('offline', renderNet);
+window.addEventListener('pageshow', wake);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+setInterval(() => flush(), 4000);
+setInterval(() => { if (!document.hidden) refresh(); }, 45000);
+
 async function answer(pid, keep){
   answered.add(pid); renderFeed();
   try {
-    const j = await api({ action: 'confirm', pid, keep });
+    const j = await api({ action: 'confirm', pid, keep }, 60000);
+    if (j.ok === false && j.error) { toast(j.error); refresh(); return; }
     if (!keep) { feed.unshift({ reply: 'Не записал — это дубль', time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), ts: Date.now() }); LS.set('feed', feed); }
-    if (j.state) { state = j.state; LS.set('state', state); renderState(); }
-  } catch(e) {
-    if (e.fatal) { toast(e.message); refresh(); return; }
-    answered.delete(pid); renderFeed();
-    toast('Нет связи, попробуйте ещё раз');
-  }
+    if (j.state) setState(j.state);
+  } catch(e) { answered.delete(pid); renderFeed(); toast('Нет связи, попробуйте ещё раз'); }
 }
 async function undo(id){
-  undoing.add(id); renderFeed(); renderHistory();
-  try { const j = await api({ action: 'undo', id }); if (j.state) { state = j.state; LS.set('state', state); renderState(); } }
-  catch(e){ toast('Не получилось отменить, нет связи'); }
-  undoing.delete(id); renderFeed(); renderHistory();
+  undoing.add(id); renderAll();
+  try { const j = await api({ action: 'undo', id }, 30000); if (j.state) setState(j.state); }
+  catch(e){ toast('Не получилось отменить — нет связи'); }
+  undoing.delete(id); renderAll();
 }
-window.addEventListener('online', flush);
-setInterval(flush, 15000);
-setInterval(() => { if (!document.hidden && cfg) refresh(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg) { flush(); refresh(); } });
 
-/* ---------- запись голоса (WAV 16 кГц) ---------- */
+/* ================= запись голоса (WAV 16 кГц) ================= */
 let rec = null, tapMode = false, downAt = 0, timerInt = null;
 const mic = $('mic'), stage = $('stage'), hint = $('hint');
 const HINT = 'Зажмите и скажите, на что потратили';
-
-// Держим микрофон открытым, пока приложение на экране: iPhone спросит разрешение один раз за запуск
 let micStream = null;
 async function getMic(){
   if (micStream && micStream.getAudioTracks().some(t => t.readyState === 'live')) return micStream;
@@ -360,8 +559,8 @@ async function getMic(){
   return micStream;
 }
 function releaseMic(){ if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; } }
-document.addEventListener('visibilitychange', () => { if (document.hidden && !rec) releaseMic(); });
-window.addEventListener('pagehide', releaseMic);
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (rec) stopRec(true); releaseMic(); } });
+window.addEventListener('pagehide', () => { if (rec) stopRec(true); releaseMic(); });
 
 async function startRec(){
   if (rec) return;
@@ -374,17 +573,15 @@ async function startRec(){
     const chunks = [];
     proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
     src.connect(proc); proc.connect(ctx.destination);
-    rec = { stream, ctx, src, proc, chunks, rate: ctx.sampleRate, t0: Date.now() };
+    rec = { ctx, src, proc, chunks, rate: ctx.sampleRate, t0: Date.now() };
     mic.classList.add('rec'); stage.classList.add('rec-on');
+    if (navigator.vibrate) navigator.vibrate(15);
     timerInt = setInterval(() => {
       const s = Math.floor((Date.now() - rec.t0) / 1000);
-      hint.innerHTML = (tapMode ? 'Нажмите, чтобы отправить · ' : 'Отпустите, чтобы отправить · ') + `<span class="timer">${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</span>`;
+      hint.innerHTML = (tapMode ? 'Нажмите, чтобы отправить · ' : 'Отпустите, чтобы отправить · ') + `<span class="timer num">${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</span>`;
       if (s >= 90) stopRec(true);
     }, 200);
-  } catch(e) {
-    rec = null;
-    toast('Нет доступа к микрофону. Разрешите его в настройках Safari.');
-  }
+  } catch(e) { rec = null; toast('Нет доступа к микрофону. Разрешите его в настройках Safari.'); }
 }
 function stopRec(send){
   if (!rec) return;
@@ -392,18 +589,16 @@ function stopRec(send){
   clearInterval(timerInt); hint.textContent = HINT;
   mic.classList.remove('rec'); stage.classList.remove('rec-on');
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
-  r.ctx.close && r.ctx.close();
+  try { r.ctx.close(); } catch(e){}
   const dur = (Date.now() - r.t0) / 1000;
   if (!send) return;
   if (dur < 0.8) return toast('Слишком коротко — зажмите и говорите');
-  const wav = encodeWav(r.chunks, r.rate, 16000);
-  enqueue({ kind: 'voice', mime: 'audio/wav', data: wav, label: '🎙 Голосовое · ' + Math.round(dur) + ' с' });
+  enqueue({ kind: 'voice', mime: 'audio/wav', data: encodeWav(r.chunks, r.rate, 16000), label: '🎙 Голосовое · ' + Math.round(dur) + ' с' });
 }
 function encodeWav(chunks, inRate, outRate){
   let len = 0; chunks.forEach(c => len += c.length);
   const all = new Float32Array(len); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
-  const ratio = inRate / outRate, outLen = Math.floor(len / ratio);
-  const pcm = new Int16Array(outLen);
+  const ratio = inRate / outRate, outLen = Math.floor(len / ratio), pcm = new Int16Array(outLen);
   for (let i = 0; i < outLen; i++) {
     const s = Math.floor(i * ratio), e = Math.min(Math.floor((i + 1) * ratio), len);
     let sum = 0; for (let j = s; j < e; j++) sum += all[j];
@@ -421,38 +616,33 @@ function encodeWav(chunks, inRate, outRate){
 }
 function b64(bytes){ let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
 
-mic.addEventListener('pointerdown', e => {
-  e.preventDefault();
-  if (rec && tapMode) { stopRec(true); return; }
-  downAt = Date.now(); startRec();
-});
+mic.addEventListener('pointerdown', e => { e.preventDefault(); if (rec && tapMode) { stopRec(true); return; } downAt = Date.now(); startRec(); });
 const up = () => {
   if (!rec && !downAt) return;
   const held = Date.now() - downAt; downAt = 0;
-  if (held < 350) { tapMode = true; return; }   // короткое нажатие — режим «нажал–говори–нажал»
+  if (held < 350) { tapMode = true; return; }     // короткое нажатие — «нажал, говоришь, нажал ещё раз»
   if (!tapMode) stopRec(true);
 };
 mic.addEventListener('pointerup', up);
 mic.addEventListener('pointercancel', up);
 mic.addEventListener('contextmenu', e => e.preventDefault());
 
-/* ---------- фото чека ---------- */
+/* ================= фото чека ================= */
 $('photoBtn').onclick = () => $('photoIn').click();
 $('photoIn').onchange = async () => {
   const f = $('photoIn').files[0]; $('photoIn').value = '';
   if (!f) return;
   try {
     const img = await loadImg(f);
-    const max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+    const sc = Math.min(1, 1600 / Math.max(img.width, img.height));
     const cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    const data = cv.toDataURL('image/jpeg', 0.82).split(',')[1];
-    enqueue({ kind: 'photo', mime: 'image/jpeg', data, label: '🧾 Фото чека' });
+    enqueue({ kind: 'photo', mime: 'image/jpeg', data: cv.toDataURL('image/jpeg', 0.8).split(',')[1], label: '🧾 Фото чека' });
   } catch(e){ toast('Не удалось прочитать фото'); }
 };
 function loadImg(file){ return new Promise((res, rej) => { const u = URL.createObjectURL(file), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); res(i); }; i.onerror = rej; i.src = u; }); }
 
-/* ---------- текст ---------- */
+/* ================= текст ================= */
 $('textBtn').onclick = () => { $('textbar').classList.toggle('hidden'); if (!$('textbar').classList.contains('hidden')) $('textIn').focus(); };
 $('textbar').onsubmit = e => {
   e.preventDefault();
@@ -461,30 +651,38 @@ $('textbar').onsubmit = e => {
   enqueue({ kind: 'text', text: t, label: '⌨️ ' + t });
 };
 
-/* ---------- мелочи ---------- */
+/* ================= мелочи ================= */
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
-let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = m; t.classList.remove('hidden'); clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 3200); }
+let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = m; t.classList.remove('hidden'); clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 3400); }
 
-/* ---------- демо-режим для превью ---------- */
+/* ================= демо-режим для превью ================= */
 function demoApi(b){
-  const st = state || { month: { name: 'ноябре', spent: 6240, earned: 25000, today: 350, sym: 'р. ПМР' }, wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
-    totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 1001 }, { cur: 'RUB', sym: '₽', v: 97920 }, { cur: 'MDL', sym: 'лей', v: 19040 }],
-    log: [{ t: '02.11 18:40', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '02.11 12:01', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и доставка · кофе', src: '' }, { t: '02.11 10:05', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', src: 'бот · голос' }],
-    recent: [{ id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '02.11 18:40' }, { id: 11, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: 'Сергей', rec: 'Сергей', date: '02.11 10:05' }], pending: [],
+  const st = state || { month: { name: 'ноябре', spent: 6240, earned: 25000, today: 350, sym: 'р. ПМР' },
+    rates: { USD: 1, EUR: .8961, RUB: 80.6182, MDL: 18.0264, PRB: 16.1 }, ratesAt: '04.11.2026',
+    wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
+    totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 975 }, { cur: 'RUB', sym: '₽', v: 87730 }, { cur: 'MDL', sym: 'лей', v: 19615 }],
+    log: [{ t: '03.11 18:40', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '03.11 12:01', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и доставка · кофе', src: '' }, { t: '03.11 10:05', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', src: 'бот · голос' }],
+    recent: [{ id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '03.11 18:40' }], pending: [],
     debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
   return new Promise(r => setTimeout(() => {
-    if (b.action === 'add') { const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
-      if (b.kind === 'text' && /кварт/i.test(b.text)) { st.pending = [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11, записал(а) Сергей)' }]; return r({ ok: true, items: [], state: st }); }
+    if (b.action === 'add') {
+      if (b.kind === 'text' && /кварт/i.test(b.text)) { st.pending = [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (03.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (03.11, записал(а) Сергей)' }]; return r({ ok: true, items: [], state: st }); }
+      const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
       const id = Math.floor(Math.random() * 900 + 100); st.recent.unshift({ id, line: l, who: cfg.who, rec: cfg.who, date: 'сейчас' });
-      r({ ok: true, items: [{ id, line: l }], state: st }); }
-    else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
+      st.log.unshift({ t: 'сейчас', who: cfg.who, a: '✅ записал(а)', id: '#' + id, d: l, src: 'приложение · ' + b.kind });
+      r({ ok: true, items: [{ id, line: l }], state: st });
+    } else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
     else if (b.action === 'undo') { st.recent.forEach(x => { if (x.id === b.id) x.x = true; }); r({ ok: true, state: st }); }
     else r({ ok: true, state: st });
-  }, b.action === 'add' ? 1400 : 200));
+  }, b.action === 'add' ? 1400 : 150));
 }
 
-/* ---------- старт ---------- */
-if (cfg) { showMain(); refresh(); flush(); } else showSetup();
+/* ================= старт ================= */
+(async () => {
+  if (cfg) showMain(); else showSetup();
+  await loadQueue();
+  if (cfg) { renderFeed(); refresh(); flush(true); }
+})();
 if ('serviceWorker' in navigator && !DEMO && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 </script>
