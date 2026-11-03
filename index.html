@@ -41,7 +41,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .qbtns button{flex:1;background:var(--card2);border-radius:10px;padding:9px 6px;font-size:13.5px;font-weight:600}
 .qbtns button.y{background:var(--red)}
 .total .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.who{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:17px}
+.tab{flex:1;background:var(--card);border-radius:14px;padding:12px 8px;font-weight:600;font-size:15px}
+.tab.on{background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
+.who{flex:none;width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:17px}
 
 /* детали */
 .details{background:var(--card);border-radius:16px;margin-top:10px;padding:6px 14px;max-height:42vh;overflow:auto}
@@ -120,18 +122,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <!-- ======= ГЛАВНЫЙ ЭКРАН ======= -->
 <div id="main" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
   <div class="top">
-    <button class="total" id="totalBtn">
-      <div class="lbl" id="mLbl">В ЭТОМ МЕСЯЦЕ</div>
-      <div class="mrow">
-        <div><b class="neg" id="mSpent">—</b><small>потрачено</small></div>
-        <div><b class="pos" id="mEarned">—</b><small>заработано</small></div>
-        <div><b id="mToday">—</b><small>сегодня</small></div>
-      </div>
-      <div class="sub" id="totalSub">нажмите, чтобы увидеть остатки</div>
-    </button>
+    <button class="tab" id="walletBtn">👛 Показать кошелёк</button>
+    <button class="tab" id="histBtn">📜 История</button>
     <button class="who" id="whoBtn" title="Сменить пользователя">?</button>
   </div>
-  <div class="details hidden" id="details"></div>
+  <div class="details hidden" id="walletPanel">
+    <div class="lbl" id="mLbl" style="font-size:12px;color:var(--muted);padding-top:10px">В ЭТОМ МЕСЯЦЕ</div>
+    <div class="mrow" style="padding-bottom:6px">
+      <div><b class="neg" id="mSpent">—</b><small>потрачено</small></div>
+      <div><b class="pos" id="mEarned">—</b><small>заработано</small></div>
+      <div><b id="mToday">—</b><small>сегодня</small></div>
+    </div>
+    <div id="details"></div>
+  </div>
+  <div class="details hidden" id="histPanel"></div>
 
   <div class="stage" id="stage">
     <div class="ring"></div><div class="ring r2"></div>
@@ -165,7 +169,6 @@ let cfg = LS.get('cfg', null);
 let queue = LS.get('queue', []);
 let feed = LS.get('feed', []);
 let state = LS.get('state', null);
-let questions = LS.get('questions', []);
 
 /* ---------- подключение по ссылке #c=КОД ---------- */
 function decodeCode(code){
@@ -209,11 +212,22 @@ function showMain(){
   renderState(); renderFeed();
 }
 $('whoBtn').onclick = showSetup;
-$('totalBtn').onclick = () => $('details').classList.toggle('hidden');
+function togglePanel(which){
+  const w = $('walletPanel'), hp = $('histPanel');
+  const openW = which === 'w' ? w.classList.contains('hidden') : false;
+  const openH = which === 'h' ? hp.classList.contains('hidden') : false;
+  w.classList.toggle('hidden', !openW); hp.classList.toggle('hidden', !openH);
+  $('walletBtn').classList.toggle('on', openW); $('histBtn').classList.toggle('on', openH);
+  $('walletBtn').textContent = openW ? '👛 Скрыть кошелёк' : '👛 Показать кошелёк';
+  if (openW || openH) refresh();
+}
+$('walletBtn').onclick = () => togglePanel('w');
+$('histBtn').onclick = () => togglePanel('h');
 
 const fmt = n => (Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 function renderState(){
   if (!state) return;
+  renderFeed();
   const M = state.month;
   if (M) {
     $('mLbl').textContent = ('В ' + M.name.replace(/^в /, '')).toUpperCase() + ' · ' + M.sym;
@@ -221,9 +235,6 @@ function renderState(){
     $('mEarned').textContent = '+' + fmt(M.earned);
     $('mToday').textContent = '−' + fmt(M.today);
   }
-  const prb = state.totals.find(t => t.cur === 'PRB');
-  $('totalSub').textContent = 'Всего денег: ' + (prb ? fmt(prb.v) + ' р. ПМР' : '—') + ' · ' + state.totals.filter(t => t.cur === 'USD' || t.cur === 'EUR')
-    .map(t => t.sym + fmt(t.v)).join(' · ');
   let h = '<div class="sec">Всего в каждой валюте</div>';
   state.totals.forEach(t => h += `<div class="row"><span>${esc(t.sym)}</span><b>${t.sym === '$' || t.sym === '€' ? esc(t.sym) + fmt(t.v) : fmt(t.v) + ' ' + esc(t.sym)}</b></div>`);
   h += '<div class="sec">Кошельки</div>';
@@ -232,26 +243,44 @@ function renderState(){
     h += '<div class="sec">Долги</div>';
     state.debts.forEach(d => h += `<div class="row"><span>${esc(d.line)}</span></div>`);
   }
-  if (state.recent && state.recent.length) {
-    h += '<div class="sec">Последние</div>';
-    state.recent.forEach(r => h += `<div class="row"><span>${esc(r.line)}<br><small style="color:var(--muted)">${esc(r.who)} · ${esc(r.date)}</small></span></div>`);
-  }
   $('details').innerHTML = h;
+  renderHistory();
 }
 
+// Лента = общие записи с сервера (из приложения, бота и команды iPhone у обоих) + то, что ещё отправляется
+let answered = new Set(), undoing = new Set();
 function renderFeed(){
   const box = $('feed');
-  const pend = queue.map(q => ({ pending: true, label: q.label, cid: q.cid, err: q.err }));
-  const qs = questions.map(q => ({ question: true, ...q }));
-  const items = qs.concat(pend, feed.slice(0, 6));
-  box.innerHTML = items.map(it => {
+  const now = Date.now();
+  const pend = queue.map(q => ({ pending: true, label: q.label, err: q.err }));
+  const qs = ((state && state.pending) || []).filter(q => !answered.has(q.pid)).map(q => ({ question: true, ...q }));
+  const replies = feed.filter(f => now - (f.ts || 0) < 5 * 60000).slice(0, 3);
+  const byId = {}; ((state && state.recent) || []).forEach(r => byId[r.id] = r);
+  const fresh = replies.map(f => f.id && byId[f.id] ? byId[f.id] : f);
+  const items = qs.concat(pend, fresh);
+  box.innerHTML = items.map(itemHtml).join('');
+  bindItems(box);
+}
+// Журнал: что записали, отменили, исправили — у обоих одинаковый, только для чтения
+function renderHistory(){
+  const hp = $('histPanel');
+  const log = (state && state.log) || [];
+  hp.innerHTML = '<div class="sec">Журнал · Сергей и Юлия · последние ' + log.length + '</div>' +
+    (log.length ? log.map(e => `<div class="row" style="flex-direction:column;gap:2px"><span><b style="font-weight:600">${esc(e.a)}</b> · ${esc(e.who)} ${e.id ? '<span style="color:var(--muted)">' + esc(e.id) + '</span>' : ''}</span><span style="font-size:14px">${esc(e.d)}</span><small style="color:var(--muted)">${esc(e.t)}${e.src ? ' · ' + esc(e.src) : ''}</small></div>`).join('')
+      : '<div class="row"><span>Пока пусто</span></div>');
+}
+function bindItems(box){
+  box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
+  box.querySelectorAll('.qbtns button').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
+}
+function itemHtml(it){
+  {
     if (it.question) return `<div class="item q"><div class="t">⚠️ <b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(it.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(it.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="qbtns"><button class="y" data-pid="${it.pid}" data-k="1">➕ Другая</button><button data-pid="${it.pid}" data-k="0">🗑 То же самое</button></div></div></div>`;
     if (it.pending) return `<div class="item pending ${it.err ? 'err' : ''}"><div class="spin"></div><div class="t">${esc(it.label)}<div class="m">${it.err ? 'нет связи — отправлю, когда появится' : 'обрабатываю…'}</div></div></div>`;
     if (it.reply) return `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time)}</div></div></div>`;
-    return `<div class="item" style="${it.undone ? 'opacity:.4;text-decoration:line-through' : ''}"><div class="t">${esc(it.line)}<div class="m">${esc(it.time)} · #${it.id}</div></div>${it.undone ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
-  }).join('');
-  box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
-  box.querySelectorAll('.qbtns button').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
+    const x = it.x || undoing.has(it.id);
+    return `<div class="item" style="${x ? 'opacity:.4' : ''}"><div class="t"><span style="${x ? 'text-decoration:line-through' : ''}">${esc(it.line)}</span><div class="m">${esc(it.who)}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date)} · #${it.id}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div></div>${x ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
+  }
 }
 
 /* ---------- сеть ---------- */
@@ -278,10 +307,9 @@ async function flush(){
       const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts });
       queue.shift(); saveQueue();
       const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      if (j.items && j.items.length) j.items.slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, time }));
-      if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time });
-      if (j.pending && j.pending.length) { questions = questions.concat(j.pending); LS.set('questions', questions); }
-      feed = feed.slice(0, 20); LS.set('feed', feed);
+      if (j.items && j.items.length) j.items.slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, who: cfg.who, date: time, ts: Date.now() }));
+      if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time, ts: Date.now() });
+      feed = feed.slice(0, 10); LS.set('feed', feed);
       if (j.state) { state = j.state; LS.set('state', state); renderState(); }
       renderFeed();
     } catch(e) {
@@ -297,29 +325,26 @@ function enqueue(item){
   queue.push(item); saveQueue(); renderFeed(); flush();
 }
 async function answer(pid, keep){
-  const q = questions.find(x => x.pid === pid);
-  questions = questions.filter(x => x.pid !== pid); LS.set('questions', questions); renderFeed();
+  answered.add(pid); renderFeed();
   try {
     const j = await api({ action: 'confirm', pid, keep });
-    const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    if (j.items && j.items.length) j.items.forEach(it => feed.unshift({ id: it.id, line: it.line, time }));
-    else feed.unshift({ reply: 'Не записал — это дубль', time });
-    LS.set('feed', feed);
+    if (!keep) { feed.unshift({ reply: 'Не записал — это дубль', time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), ts: Date.now() }); LS.set('feed', feed); }
     if (j.state) { state = j.state; LS.set('state', state); renderState(); }
-    renderFeed();
   } catch(e) {
-    if (e.fatal) { toast(e.message); return; }
-    if (q) { questions.unshift(q); LS.set('questions', questions); renderFeed(); }
+    if (e.fatal) { toast(e.message); refresh(); return; }
+    answered.delete(pid); renderFeed();
     toast('Нет связи, попробуйте ещё раз');
   }
 }
 async function undo(id){
-  const it = feed.find(f => f.id === id); if (it) { it.undone = true; LS.set('feed', feed); renderFeed(); }
+  undoing.add(id); renderFeed(); renderHistory();
   try { const j = await api({ action: 'undo', id }); if (j.state) { state = j.state; LS.set('state', state); renderState(); } }
-  catch(e){ if (it) { it.undone = false; renderFeed(); } toast('Не получилось отменить, нет связи'); }
+  catch(e){ toast('Не получилось отменить, нет связи'); }
+  undoing.delete(id); renderFeed(); renderHistory();
 }
 window.addEventListener('online', flush);
 setInterval(flush, 15000);
+setInterval(() => { if (!document.hidden && cfg) refresh(); }, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg) { flush(); refresh(); } });
 
 /* ---------- запись голоса (WAV 16 кГц) ---------- */
@@ -444,13 +469,16 @@ let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t) { t
 function demoApi(b){
   const st = state || { month: { name: 'ноябре', spent: 6240, earned: 25000, today: 350, sym: 'р. ПМР' }, wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
     totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 1001 }, { cur: 'RUB', sym: '₽', v: 97920 }, { cur: 'MDL', sym: 'лей', v: 19040 }],
-    recent: [{ line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', date: '02.11 18:40' }],
+    log: [{ t: '02.11 18:40', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '02.11 12:01', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и доставка · кофе', src: '' }, { t: '02.11 10:05', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', src: 'бот · голос' }],
+    recent: [{ id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '02.11 18:40' }, { id: 11, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: 'Сергей', rec: 'Сергей', date: '02.11 10:05' }], pending: [],
     debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
   return new Promise(r => setTimeout(() => {
     if (b.action === 'add') { const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
-      if (b.kind === 'text' && /кварт/i.test(b.text)) return r({ ok: true, items: [], pending: [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11, записал(а) Сергей)' }], state: st });
-      r({ ok: true, items: [{ id: Math.floor(Math.random() * 900 + 100), line: l }], state: st }); }
-    else if (b.action === 'confirm') r({ ok: true, items: b.keep ? [{ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира' }] : [], state: st });
+      if (b.kind === 'text' && /кварт/i.test(b.text)) { st.pending = [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (02.11, записал(а) Сергей)' }]; return r({ ok: true, items: [], state: st }); }
+      const id = Math.floor(Math.random() * 900 + 100); st.recent.unshift({ id, line: l, who: cfg.who, rec: cfg.who, date: 'сейчас' });
+      r({ ok: true, items: [{ id, line: l }], state: st }); }
+    else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
+    else if (b.action === 'undo') { st.recent.forEach(x => { if (x.id === b.id) x.x = true; }); r({ ok: true, state: st }); }
     else r({ ok: true, state: st });
   }, b.action === 'add' ? 1400 : 200));
 }
