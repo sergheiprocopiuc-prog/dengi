@@ -327,10 +327,21 @@ let rec = null, tapMode = false, downAt = 0, timerInt = null;
 const mic = $('mic'), stage = $('stage'), hint = $('hint');
 const HINT = 'Зажмите и скажите, на что потратили';
 
+// Держим микрофон открытым, пока приложение на экране: iPhone спросит разрешение один раз за запуск
+let micStream = null;
+async function getMic(){
+  if (micStream && micStream.getAudioTracks().some(t => t.readyState === 'live')) return micStream;
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+  return micStream;
+}
+function releaseMic(){ if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; } }
+document.addEventListener('visibilitychange', () => { if (document.hidden && !rec) releaseMic(); });
+window.addEventListener('pagehide', releaseMic);
+
 async function startRec(){
   if (rec) return;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+    const stream = await getMic();
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') await ctx.resume();
     const src = ctx.createMediaStreamSource(stream);
@@ -356,7 +367,6 @@ function stopRec(send){
   clearInterval(timerInt); hint.textContent = HINT;
   mic.classList.remove('rec'); stage.classList.remove('rec-on');
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
-  r.stream.getTracks().forEach(t => t.stop());
   r.ctx.close && r.ctx.close();
   const dur = (Date.now() - r.t0) / 1000;
   if (!send) return;
