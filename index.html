@@ -245,7 +245,7 @@ function renderFeed(){
   const qs = questions.map(q => ({ question: true, ...q }));
   const items = qs.concat(pend, feed.slice(0, 6));
   box.innerHTML = items.map(it => {
-    if (it.question) return `<div class="item q"><div class="t">⚠️ <b>Похоже, уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(it.line)}</div><div class="m">Уже есть: ${esc(it.dupLine)}</div><div class="m">Это дополнение или то же самое?</div><div class="qbtns"><button class="y" data-pid="${it.pid}" data-k="1">➕ Дополнение</button><button data-pid="${it.pid}" data-k="0">🗑 То же самое</button></div></div></div>`;
+    if (it.question) return `<div class="item q"><div class="t">⚠️ <b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(it.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(it.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="qbtns"><button class="y" data-pid="${it.pid}" data-k="1">➕ Другая</button><button data-pid="${it.pid}" data-k="0">🗑 То же самое</button></div></div></div>`;
     if (it.pending) return `<div class="item pending ${it.err ? 'err' : ''}"><div class="spin"></div><div class="t">${esc(it.label)}<div class="m">${it.err ? 'нет связи — отправлю, когда появится' : 'обрабатываю…'}</div></div></div>`;
     if (it.reply) return `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time)}</div></div></div>`;
     return `<div class="item" style="${it.undone ? 'opacity:.4;text-decoration:line-through' : ''}"><div class="t">${esc(it.line)}<div class="m">${esc(it.time)} · #${it.id}</div></div>${it.undone ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
