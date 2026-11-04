@@ -25,8 +25,8 @@
 html,body{margin:0;height:100%;color:var(--text);
   font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   -webkit-user-select:none;user-select:none;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
-body{background:radial-gradient(130% 55% at 50% 108%,rgba(227,20,31,.13),transparent 62%),
-  radial-gradient(80% 40% at 100% -5%,rgba(220,170,106,.07),transparent 60%),var(--bg);
+html{background:var(--bg);min-height:100%}
+body{background:transparent;min-height:100%;min-height:100dvh;
   display:flex;flex-direction:column;
   padding:calc(var(--st) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(var(--sb) + 12px) max(16px,env(safe-area-inset-left,0px))}
 body.ny{padding-top:calc(var(--st) + 26px)}
@@ -209,7 +209,10 @@ svg.lc{width:18px;height:18px;flex:none;display:inline-block;vertical-align:-3px
 .toast{position:fixed;left:50%;bottom:calc(var(--sb) + 90px);transform:translateX(-50%);background:#2e2926;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;max-width:90vw;text-align:center}
 
 /* ===== праздники ===== */
-#fx{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+/* фон-свечение — на отдельном слое во весь экран, включая зону под полоской «домой» */
+#fx{position:fixed;top:0;left:0;right:0;bottom:calc(-1 * env(safe-area-inset-bottom, 0px));pointer-events:none;z-index:0;overflow:hidden;
+  background:radial-gradient(130% 55% at 50% 100%,rgba(227,20,31,.14),transparent 62%),
+  radial-gradient(80% 40% at 100% -5%,rgba(220,170,106,.07),transparent 60%),var(--bg)}
 .flake{position:absolute;top:-28px;left:var(--x);width:var(--s);height:var(--s);color:#eef8ff;opacity:var(--o);
   animation:fall var(--d) linear var(--l) infinite;will-change:transform}
 .flake svg{display:block;width:100%;height:100%;animation:spin var(--r) linear infinite;filter:drop-shadow(0 0 3px rgba(200,235,255,.45))}
