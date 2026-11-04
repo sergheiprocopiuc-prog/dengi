@@ -18,7 +18,7 @@
   --text:#f6f1ea; --muted:#968c83; --dim:#6f665f;
   --red:#e3141f; --red-hi:#ff525a; --red-lo:#9e0b12;
   --gold:#dcaa6a; --gold-lo:#8f6a3c; --green:#46d08c; --amber:#f0b54a;
-  --r:18px; --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+  --r:18px; --ic:#D9AD69; --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -50,7 +50,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:12px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:4px}
 .seg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px 7px;border-radius:12px;font-size:11.5px;font-weight:600;color:var(--muted);transition:background .15s,color .15s;min-width:0}
 .seg button i{font-style:normal;font-size:18px;line-height:20px;height:20px;display:grid;place-items:center}
-.seg button i svg{width:19px;height:19px;display:block}
+.seg button i svg{width:21px;height:21px;display:block}
+.seg button i{color:var(--ic)}
+.seg button.on i{color:#f3cf93}
+svg.lc{width:18px;height:18px;flex:none;display:inline-block;vertical-align:-3px}
+.act svg.lc{width:20px;height:20px;color:var(--ic)}
+.ico svg.lc{width:16px;height:16px;color:var(--ic)}
+.secrow .si svg.lc{width:17px;height:17px;color:var(--ic)}
+.secrow .si{display:inline-flex;width:20px;justify-content:center;vertical-align:-3px;margin-right:4px}
+.log .a svg.lc{width:15px;height:15px;vertical-align:-2px;margin-right:3px;color:var(--ic)}
+.sh-h b svg.lc{width:19px;height:19px;color:var(--ic);margin-right:6px;vertical-align:-3px}
+.blur{filter:blur(6px);user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums}
+.item.secret{border-color:#4b3d2a;background:linear-gradient(135deg,rgba(220,170,106,.10),rgba(220,170,106,0) 60%),var(--s1)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--gold);background:rgba(220,170,106,.12);border-radius:999px;padding:2px 8px;margin-top:4px}
+.badge svg.lc{width:12px;height:12px}
+.recx{margin-top:12px;display:none;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.rec-on .recx{display:inline-flex}
+.recx svg.lc{width:15px;height:15px}
+.stage.willx .hint{color:var(--red-hi)}
+.stage.willx .mic{transform:scale(.92);filter:saturate(.4)}
 .seg button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .seg button.on{background:var(--s3);color:var(--text);box-shadow:inset 0 0 0 1px rgba(220,170,106,.35)}
 
@@ -61,7 +79,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   background:radial-gradient(circle at 34% 28%,#ff6b72 0%,var(--red) 46%,var(--red-lo) 100%);
   box-shadow:0 0 0 7px rgba(220,170,106,.07),0 0 0 8px rgba(220,170,106,.18),0 22px 60px -12px rgba(227,20,31,.6),inset 0 -10px 24px rgba(0,0,0,.28);
   display:grid;place-items:center;transition:transform .12s ease}
-.mic svg{width:32%;height:32%;fill:#fff;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.mic svg{width:30%;height:30%;color:#fff;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
 .mic.rec{transform:scale(1.07)}
 .ring{position:absolute;width:min(60vw,240px);height:min(60vw,240px);border-radius:50%;border:2px solid var(--red-hi);opacity:0;z-index:1}
 .rec-on .ring{animation:pulse 1.4s ease-out infinite}.rec-on .ring.r2{animation-delay:.7s}
@@ -172,8 +190,46 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
 /* ===== праздники ===== */
 #fx{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.flake{position:absolute;top:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:var(--o);
-  filter:blur(.4px);animation:fall var(--d) linear var(--l) infinite;will-change:transform}
+.flake{position:absolute;top:-28px;left:var(--x);width:var(--s);height:var(--s);color:#eef8ff;opacity:var(--o);
+  animation:fall var(--d) linear var(--l) infinite;will-change:transform}
+.flake svg{display:block;width:100%;height:100%;animation:spin var(--r) linear infinite;filter:drop-shadow(0 0 3px rgba(200,235,255,.45))}
+.flake.dot{border-radius:50%;background:#fff;filter:blur(1.2px)}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* лёд и снег на кнопках */
+body.ny{--ice:rgba(186,226,255,.30)}
+body.ny .seg,body.ny .act,body.ny .who,body.ny .sheet,body.ny .item,body.ny .textbar input{border-color:var(--ice);
+  background-image:linear-gradient(180deg,rgba(200,232,255,.085),rgba(200,232,255,0) 46%)}
+body.ny .seg,body.ny .act{position:relative}
+body.ny .seg::before,body.ny .act::before{content:"";position:absolute;left:10px;right:10px;top:-6px;height:11px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='11'%3E%3Cpath d='M0 11V6c4-5 9-6 14-3 4-4 10-4 14 0 5-3 10-3 14 1 5-4 10-3 14 1v6z' fill='%23f4fbff'/%3E%3Cpath d='M0 9c4-2 9-2 14 0s10 2 14 0 10-2 14 0 10 2 14 0' stroke='%23cfe9ff' stroke-opacity='.6' fill='none'/%3E%3C/svg%3E") repeat-x;
+  background-size:56px 11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.95;border-radius:6px}
+body.ny .seg::after{content:"";position:absolute;left:18px;right:18px;bottom:-11px;height:11px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='11'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e9f6ff' stop-opacity='.9'/%3E%3Cstop offset='1' stop-color='%23bfe3ff' stop-opacity='.05'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M4 0l2 9 2-9M17 0l1.5 5 1.5-5M29 0l2.5 11 2.5-11M44 0l1.5 6 1.5-6M55 0l2 8 2-8' fill='url(%23g)'/%3E%3C/svg%3E") repeat-x;background-size:64px 11px}
+body.ny .mic{box-shadow:0 0 0 6px rgba(200,235,255,.04),0 0 0 7px rgba(205,236,255,.24),0 0 26px 4px rgba(170,220,255,.10),0 22px 60px -12px rgba(227,20,31,.55),inset 0 -10px 24px rgba(0,0,0,.28)}
+body.ny .mic::before{content:"";position:absolute;top:.6%;left:29%;right:29%;height:7.5%;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 14C10 4 30 0 50 0s40 4 50 14c-6 3-10 0-15 3-5 3-8-2-14 1-6 3-9-1-15 1-6 2-9-2-15 0-6 2-9-1-14 0C15 21 8 15 0 14z' fill='%23f6fbff'/%3E%3C/svg%3E") no-repeat center/100% 100%;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.92}
+body.ny .mic::after{content:"";position:absolute;inset:6%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 70% 78%,rgba(255,255,255,.18) 0 1.5px,transparent 2px),radial-gradient(circle at 26% 64%,rgba(255,255,255,.22) 0 1.2px,transparent 1.8px),radial-gradient(circle at 80% 40%,rgba(255,255,255,.16) 0 1px,transparent 1.6px)}
+.nyscene{position:absolute;left:0;right:0;bottom:4px;height:64px;pointer-events:none;z-index:1;display:none}
+body.ny .nyscene{display:block}
+.nyscene .drift{position:absolute;left:-8px;right:-8px;bottom:0;height:30px}
+.nyscene i{position:absolute;bottom:6px;color:var(--ic);opacity:.92}
+.nyscene i svg{display:block;width:100%;height:auto}
+.nyscene .hare{left:5%;width:38px;animation:hop 9s ease-in-out infinite}
+.nyscene .fir{right:6%;width:30px;bottom:8px}
+.nyscene .fir2{right:15%;width:20px;bottom:7px;opacity:.6}
+@keyframes hop{0%,86%,100%{transform:none}90%{transform:translateY(-7px) rotate(-3deg)}94%{transform:none}}
+.sleigh{position:fixed;left:0;top:calc(var(--st) + 168px);display:flex;align-items:flex-end;color:var(--ic);opacity:.85;
+  animation:fly 30s linear 2s infinite;transform:translateX(-300px);will-change:transform}
+.sleigh .bob{display:flex;align-items:flex-end;animation:bob 2.6s ease-in-out infinite alternate}
+.sleigh .sl{width:84px}.sleigh .dr{width:50px;margin-left:2px}.sleigh .dr.a{margin-bottom:9px}.sleigh .dr.b{margin-bottom:15px}
+.sleigh svg{display:block;width:100%;height:auto}
+.sleigh .trail{position:absolute;right:100%;bottom:6px;width:120px;height:20px}
+.sleigh .trail i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff3d6;box-shadow:0 0 6px 1px rgba(255,220,150,.8);animation:tw 1.2s ease-in-out infinite alternate}
+@keyframes fly{0%{transform:translateX(-300px)}42%{transform:translateX(calc(100vw + 40px))}100%{transform:translateX(calc(100vw + 40px))}}
+@keyframes bob{from{transform:translateY(-4px) rotate(-2deg)}to{transform:translateY(5px) rotate(1.5deg)}}
+@keyframes tw{from{opacity:.15}to{opacity:1}}
 @keyframes fall{0%{transform:translate3d(0,-2vh,0)}50%{transform:translate3d(var(--w),50vh,0)}100%{transform:translate3d(0,104vh,0)}}
 .garland{position:fixed;left:0;right:0;top:calc(var(--st) + 2px);height:22px;z-index:30;pointer-events:none;display:flex;justify-content:space-around;padding:0 6px}
 .garland::before{content:"";position:absolute;left:0;right:0;top:-6px;height:16px;
@@ -185,7 +241,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 @keyframes blink{0%{opacity:.35;box-shadow:0 0 2px 0 var(--c)}100%{opacity:1;box-shadow:0 0 10px 2px var(--c)}}
 .heart{position:absolute;bottom:-40px;left:var(--x);font-size:var(--s);color:var(--c);opacity:.85;animation:rise var(--d) ease-in var(--l) infinite;will-change:transform}
 @keyframes rise{0%{transform:translate3d(0,0,0) rotate(-10deg);opacity:0}10%{opacity:.9}50%{transform:translate3d(var(--w),-55vh,0) rotate(12deg)}100%{transform:translate3d(0,-112vh,0) rotate(-8deg);opacity:0}}
-@media (prefers-reduced-motion:reduce){.flake,.heart,.bulb{animation:none}.flake,.heart{display:none}}
+@media (prefers-reduced-motion:reduce){.flake,.heart,.bulb,.sleigh,.nyscene .hare,.flake svg{animation:none}.flake,.heart,.sleigh{display:none}}
 </style>
 </head>
 <body>
@@ -213,10 +269,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
     <button class="who" id="whoBtn" aria-label="Сменить пользователя">?</button>
   </header>
   <nav class="seg">
-    <button id="tab-w" data-p="w"><i>💰</i><span>Кошелёк</span></button>
-    <button id="tab-s" data-p="s"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#dcaa6a" stroke-width="2.2"/><path d="M12 3a9 9 0 0 1 9 9h-9z" fill="#e3141f"/><path d="M12 12h9a9 9 0 0 1-3.2 6.9z" fill="#46d08c"/></svg></i><span>Траты</span></button>
-    <button id="tab-h" data-p="h"><i>📜</i><span>История</span></button>
-    <button id="tab-c" data-p="c"><i>💱</i><span>Конвертер</span></button>
+    <button id="tab-w" data-p="w"><i data-ic="wallet"></i><span>Кошелёк</span></button>
+    <button id="tab-s" data-p="s"><i data-ic="chart-pie"></i><span>Аналитика</span></button>
+    <button id="tab-h" data-p="h"><i data-ic="history"></i><span>История</span></button>
+    <button id="tab-c" data-p="c"><i data-ic="arrow-left-right"></i><span>Конвертер</span></button>
   </nav>
 
   <div class="work">
@@ -225,18 +281,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
     <div class="stage" id="stage">
       <div class="ring"></div><div class="ring r2"></div>
       <button class="mic" id="mic" aria-label="Записать голос">
-        <svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6.5-3.6a.9.9 0 1 0-1.8 0 4.7 4.7 0 0 1-9.4 0 .9.9 0 1 0-1.8 0 6.5 6.5 0 0 0 5.6 6.4V20H8.9a.9.9 0 1 0 0 1.8h6.2a.9.9 0 1 0 0-1.8h-2.2v-2.2a6.5 6.5 0 0 0 5.6-6.4z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/> <path d="M19 10v2a7 7 0 0 1-14 0v-2"/> <line x1="12" x2="12" y1="19" y2="22"/></svg>
       </button>
       <div class="hint" id="hint">Зажмите и скажите, на что потратили</div>
+      <button class="recx" id="recX" type="button"><i data-ic="x"></i>Отменить запись</button>
+      <div class="nyscene" aria-hidden="true">
+        <svg class="drift" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 30V20C40 10 70 8 110 16S190 26 230 14 330 4 400 18V30z" fill="rgba(225,243,255,.09)"/><path d="M0 20C40 10 70 8 110 16S190 26 230 14 330 4 400 18" fill="none" stroke="rgba(215,238,255,.38)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>
+        <i class="hare" data-art="hare"></i><i class="fir2" data-art="tree"></i><i class="fir" data-art="tree"></i>
+      </div>
     </div>
 
     <div class="actions">
-      <button class="act" id="photoBtn">📷 Чек</button>
-      <button class="act" id="textBtn">⌨️ Текст</button>
+      <button class="act" id="photoBtn"><i data-ic="camera"></i>Чек</button>
+      <button class="act" id="textBtn"><i data-ic="keyboard"></i>Текст</button>
     </div>
     <form class="textbar hidden" id="textbar">
       <input id="textIn" placeholder="магазин 1000" autocomplete="off" enterkeyhint="send">
-      <button class="send" type="submit" aria-label="Отправить">↑</button>
+      <button class="send" type="submit" aria-label="Отправить"><i data-ic="send-horizontal"></i></button>
     </form>
     <input type="file" id="photoIn" accept="image/*" capture="environment" class="hidden">
     <div class="feed" id="feed"></div>
@@ -257,6 +318,59 @@ let feed = LS.get('feed', []);
 let state = LS.get('state', null);
 let queue = [];                       // то, что ещё не дошло до сервера (хранится в IndexedDB)
 
+/* ================= иконки Lucide (ISC), золото, линия 1.9 ================= */
+const ICONS = {"wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/> <path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "chart-pie": "<path d=\"M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z\"/> <path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\"/>", "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/> <path d=\"M3 3v5h5\"/> <path d=\"M12 7v5l4 2\"/>", "arrow-left-right": "<path d=\"M8 3 4 7l4 4\"/> <path d=\"M4 7h16\"/> <path d=\"m16 21 4-4-4-4\"/> <path d=\"M20 17H4\"/>", "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"/> <circle cx=\"12\" cy=\"13\" r=\"3\"/>", "keyboard": "<path d=\"M10 8h.01\"/> <path d=\"M12 12h.01\"/> <path d=\"M14 8h.01\"/> <path d=\"M16 12h.01\"/> <path d=\"M18 8h.01\"/> <path d=\"M6 8h.01\"/> <path d=\"M7 16h10\"/> <path d=\"M8 12h.01\"/> <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/>", "x": "<path d=\"M18 6 6 18\"/> <path d=\"m6 6 12 12\"/>", "undo-2": "<path d=\"M9 14 4 9l5-5\"/> <path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/> <path d=\"M21 3v5h-5\"/>", "mic": "<path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\"/> <path d=\"M19 10v2a7 7 0 0 1-14 0v-2\"/> <line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\"/>", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/> <path d=\"M12 8v13\"/> <path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/> <path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "trash-2": "<path d=\"M3 6h18\"/> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\"/> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "send-horizontal": "<path d=\"M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z\"/> <path d=\"M6 12h16\"/>", "clock-3": "<circle cx=\"12\" cy=\"12\" r=\"10\"/> <polyline points=\"12 6 12 12 16.5 12\"/>", "cloud-off": "<path d=\"m2 2 20 20\"/> <path d=\"M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193\"/> <path d=\"M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07\"/>", "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/> <path d=\"M7 2v20\"/> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\"/>", "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>", "baby": "<path d=\"M9 12h.01\"/> <path d=\"M15 12h.01\"/> <path d=\"M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5\"/> <path d=\"M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1\"/>", "heart-pulse": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/> <path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\"/>", "car": "<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\"/> <circle cx=\"7\" cy=\"17\" r=\"2\"/> <path d=\"M9 17h6\"/> <circle cx=\"17\" cy=\"17\" r=\"2\"/>", "shirt": "<path d=\"M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z\"/>", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/> <path d=\"M20 3v4\"/> <path d=\"M22 5h-4\"/> <path d=\"M4 17v2\"/> <path d=\"M5 18H3\"/>", "party-popper": "<path d=\"M5.8 11.3 2 22l10.7-3.79\"/> <path d=\"M4 3h.01\"/> <path d=\"M22 8h.01\"/> <path d=\"M15 2h.01\"/> <path d=\"M22 20h.01\"/> <path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\"/> <path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17\"/> <path d=\"m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7\"/> <path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z\"/>", "file-text": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/> <path d=\"M10 9H8\"/> <path d=\"M16 13H8\"/> <path d=\"M16 17H8\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\"/> <path d=\"M11 3 8 9l4 13 4-13-3-6\"/> <path d=\"M2 9h20\"/>", "circle-help": "<circle cx=\"12\" cy=\"12\" r=\"10\"/> <path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/> <path d=\"M12 17h.01\"/>", "pencil": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"/> <path d=\"m15 5 4 4\"/>", "pin": "<path d=\"M12 17v5\"/> <path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z\"/>", "folder-plus": "<path d=\"M12 10v6\"/> <path d=\"M9 13h6\"/> <path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "triangle-alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/> <path d=\"M12 9v4\"/> <path d=\"M12 17h.01\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/> <path d=\"m4.9 4.9 14.2 14.2\"/>", "eye-off": "<path d=\"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49\"/> <path d=\"M14.084 14.158a3 3 0 0 1-4.242-4.242\"/> <path d=\"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143\"/> <path d=\"m2 2 20 20\"/>", "plus": "<path d=\"M5 12h14\"/> <path d=\"M12 5v14\"/>", "circle-x": "<circle cx=\"12\" cy=\"12\" r=\"10\"/> <path d=\"m15 9-6 6\"/> <path d=\"m9 9 6 6\"/>", "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/> <polyline points=\"16 7 22 7 22 13\"/>"};
+const ic = (n, sw) => `<svg class="lc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw || 1.9}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ICONS['circle-help']}</svg>`;
+// Контурные новогодние фигуры (stroke = currentColor), стиль как у Lucide
+const ART = {
+  deer: `<svg viewBox="0 0 64 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 23c0-5 7-8 16-8 7 0 11 1 14 3"/><path d="M12 23c0 4 6 7 15 7 7 0 12-2 15-5"/>
+    <path d="M42 18l5-7M42 25l7-9"/>
+    <path d="M47 11c2-2 6-2 9 0 1 1 0 3-2 3h-5"/><path d="M47 11l-3-2"/>
+    <path d="M48 9c-2-3-2-6 0-8M47.5 5.5l-3-2.5M49 9c1-4 4-6 8-6M53 5l.5-3.5M55.5 3.5l3-.5"/>
+    <path d="M40 27l7 3 2 4M37 29l3 8M18 28l-7 2-2 4M21 29.5l-3 7M12 21l-4-3"/>
+    <circle cx="52.5" cy="11.6" r=".6" fill="currentColor"/><circle cx="57" cy="12.6" r="1.1" fill="#e3141f" stroke="none"/></svg>`,
+  sleigh: `<svg viewBox="0 0 96 60" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 52h62c7 0 11-3 11-8"/><path d="M14 52v-6M56 52v-6"/>
+    <path d="M10 30h30c6 0 8 9 18 9h8v3c0 3-2 4-4 4H14c-3 0-4-3-4-6z"/>
+    <path d="M12 30c-2-8 2-14 8-13 3 0 4 5 4 13"/><path d="M16 18l3 3"/>
+    <path d="M26 30c0-9 3-14 8-14s8 5 8 14"/>
+    <path d="M30 11c0-5 4-8 9-6l2 6"/><circle cx="42.5" cy="11" r="1.6"/>
+    <path d="M31 11c-1 0-1 2 0 2h9c1 0 1-2 0-2"/>
+    <path d="M31 13c0 8 3 11 4.5 11S40 21 40 13"/>
+    <path d="M40 22l18 3"/><circle cx="34" cy="14" r=".5" fill="currentColor"/></svg>`,
+  hare: `<svg viewBox="0 0 44 46" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 42c-4-4-4-13 2-17 5-4 13-3 16 2 3 4 3 10 1 13-1 2-3 2-5 2H11"/>
+    <path d="M25 26c-2-2-2-7 2-9 4-2 8 0 9 3 1 4-1 7-5 8"/>
+    <path d="M27 17c-3-6-3-12 0-14 2-1 4 3 3 9"/><path d="M32 17c1-6 4-11 7-11 2 0 1 6-3 11"/>
+    <path d="M24 34l1 8M8 37a2.5 2.5 0 1 0-2 4"/>
+    <circle cx="32" cy="21" r=".7" fill="currentColor"/><path d="M36.5 22.5l.8.6"/></svg>`,
+  tree: `<svg viewBox="0 0 40 52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 6l-8 12h5l-9 12h6L4 42h32l-10-12h6l-9-12h5z"/><path d="M20 42v6"/>
+    <path d="M20 1.5l1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4z" fill="currentColor"/>
+    <circle cx="16" cy="24" r=".9" fill="currentColor"/><circle cx="24" cy="33" r=".9" fill="currentColor"/><circle cx="14" cy="37" r=".9" fill="currentColor"/></svg>`
+};
+// Снежинка-кристалл: 6 лучей с веточками (3 варианта)
+function flakeSvg(v) {
+  let p = '';
+  for (let i = 0; i < 6; i++) {
+    const a = i * 60;
+    let arm = 'M12 12V2';
+    if (v === 0) arm += 'M12 5l-2.6-2M12 5l2.6-2M12 8.2l-2-1.6M12 8.2l2-1.6';
+    if (v === 1) arm += 'M12 4.5l-2.2-2.2M12 4.5l2.2-2.2M12 7.5h-1.6M12 7.5h1.6';
+    if (v === 2) arm += 'M12 6l-3-2.4M12 6l3-2.4';
+    p += `<path transform="rotate(${a} 12 12)" d="${arm}"/>`;
+  }
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">${p}<circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>`;
+}
+
+document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = ic(el.dataset.ic));
+document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.dataset.art]);
+const SEC_IC = { 'Еда': 'utensils', 'Дом и быт': 'house', 'Ребёнок': 'baby', 'Здоровье': 'heart-pulse', 'Транспорт': 'car', 'Одежда и обувь': 'shirt',
+  'Красота и уход': 'sparkles', 'Развлечения': 'party-popper', 'Подарки': 'gift', 'Документы и услуги': 'file-text', 'Работа': 'briefcase', 'Крупные покупки': 'gem', 'Прочее': 'circle-help' };
+const LOG_IC = [[/^✅/, 'check'], [/^❌/, 'x'], [/^✏️?/, 'pencil'], [/^📌/, 'pin'], [/^🗂/, 'folder-plus'], [/^⚠️?/, 'triangle-alert'], [/^🗑/, 'trash-2'], [/^🚫/, 'ban'], [/^🎁/, 'gift']];
+const logAction = a => { for (const [re, n] of LOG_IC) if (re.test(a)) return ic(n) + esc(a.replace(re, '').trim()); return esc(a); };
+
 /* ================= праздничные украшения ================= */
 (function decorate(){
   const d = new Date(), m = d.getMonth() + 1, day = d.getDate();
@@ -264,9 +378,13 @@ let queue = [];                       // то, что ещё не дошло д�
   const fx = $('fx'), r = (a, b) => a + Math.random() * (b - a);
   if (s === 'ny') {
     document.body.classList.add('ny');
-    $('sIcon').textContent = '🎄';
+    $('sIcon').innerHTML = '';
     let h = '';
-    for (let i = 0; i < 36; i++) h += `<i class="flake" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(2.5, 6).toFixed(1)}px;--o:${r(.35, .85).toFixed(2)};--d:${r(9, 18).toFixed(1)}s;--l:-${r(0, 18).toFixed(1)}s;--w:${r(-28, 28).toFixed(0)}px"></i>`;
+    const fl = [0, 1, 2].map(flakeSvg);
+    for (let i = 0; i < 22; i++) h += `<i class="flake" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(9, 20).toFixed(1)}px;--o:${r(.45, .9).toFixed(2)};--d:${r(11, 22).toFixed(1)}s;--l:-${r(0, 22).toFixed(1)}s;--w:${r(-34, 34).toFixed(0)}px;--r:${r(8, 20).toFixed(0)}s">${fl[i % 3]}</i>`;
+    for (let i = 0; i < 18; i++) h += `<i class="flake dot" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(2, 4.5).toFixed(1)}px;--o:${r(.25, .6).toFixed(2)};--d:${r(9, 16).toFixed(1)}s;--l:-${r(0, 16).toFixed(1)}s;--w:${r(-20, 20).toFixed(0)}px"></i>`;
+    let tr = ''; for (let i = 0; i < 9; i++) tr += `<i style="right:${i * 13}px;bottom:${(Math.sin(i) * 6 + 6).toFixed(0)}px;animation-delay:-${(i * .27).toFixed(2)}s;opacity:${(1 - i / 10).toFixed(2)}"></i>`;
+    h += `<div class="sleigh"><div class="bob"><span class="trail">${tr}</span><span class="sl">${ART.sleigh}</span><span class="dr a">${ART.deer}</span><span class="dr b">${ART.deer}</span></div></div>`;
     fx.innerHTML = h;
     const g = document.createElement('div'); g.className = 'garland'; g.setAttribute('aria-hidden', 'true');
     const cols = ['#ff525a', '#ffd166', '#46d08c', '#6fb6ff', '#dcaa6a'];
@@ -365,7 +483,7 @@ function openPanel(p){
 
 const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 const money = (v, sym) => sym === '$' || sym === '€' ? sym + fmt(v) : fmt(v) + ' ' + sym;
-const head = t => `<div class="sh-h"><b>${t}</b><button class="x" data-close aria-label="Закрыть">✕</button></div>`;
+const head = (t, n) => `<div class="sh-h"><b>${n ? ic(n) : ''}${t}</b><button class="x" data-close aria-label="Закрыть">${ic('x')}</button></div>`;
 
 function renderPanel(){
   const sh = $('sheet');
@@ -378,9 +496,9 @@ function renderPanel(){
 }
 
 function walletHtml(){
-  if (!state) return head('💰 Кошелёк') + '<div class="row"><span>Загружаю…</span></div>';
+  if (!state) return head('Кошелёк', 'wallet') + '<div class="row"><span>Загружаю…</span></div>';
   const M = state.month || {};
-  let h = head('💰 Кошелёк');
+  let h = head('Кошелёк', 'wallet');
   h += `<div class="sec">${esc(('В ' + (M.name || 'этом месяце')).replace(/^В в /, 'В '))} · ${esc(M.sym || '')}</div>
     <div class="stats"><div class="stat"><b class="neg">−${fmt(M.spent || 0)}</b><small>потрачено</small></div>
     <div class="stat"><b class="pos">+${fmt(M.earned || 0)}</b><small>заработано</small></div>
@@ -419,13 +537,15 @@ function historyHtml(){
   let log = logByMonth[m];
   if (!log) log = ((state && state.log) || []).filter(e => (e.k || '').slice(0, 7) === m);
   const st = ((state && state.stats) || []).find(s => s.m === m);
-  let h = head('📜 История') + monthsHtml(m);
+  let h = head('История', 'history') + monthsHtml(m);
   if (st) h += `<div class="stats" style="margin:4px 0 2px"><div class="stat"><b class="neg">−${fmt(st.spent)}</b><small>потрачено</small></div><div class="stat"><b class="pos">+${fmt(st.earned)}</b><small>заработано</small></div><div class="stat"><b>${st.earned - st.spent >= 0 ? '+' : '−'}${fmt(Math.abs(st.earned - st.spent))}</b><small>итог, р. ПМР</small></div></div>`;
   if (!log.length) return h + `<div class="row"><span>${logLoading === m ? 'Загружаю…' : 'За этот месяц записей нет'}</span></div>`;
   let day = '';
   log.forEach(e => {
     if (e.k && e.k !== day) { day = e.k; const d = new Date(e.k + 'T12:00'); h += `<div class="day">${d.getDate()} ${MONTHS_G[d.getMonth()]}, ${WD[d.getDay()]}</div>`; }
-    h += `<div class="log"><span class="a"><b>${esc(e.a)}</b> · ${esc(e.who)} <span style="color:var(--muted)">${esc(e.id || '')}</span></span><span class="d">${esc(e.d)}</span><small>${esc((e.t || '').slice(6))}${e.src ? ' · ' + esc(e.src) : ''}</small></div>`;
+    h += e.secret
+      ? `<div class="log"><span class="a">${ic('gift')}<b>Секретная покупка</b> · ${esc(e.who)}</span><span class="d"><span class="blur">Что-то очень приятное · 0 000 р.</span></span><small>${esc((e.t || '').slice(6))} · сюрприз, подробности скрыты</small></div>`
+      : `<div class="log"><span class="a"><b>${logAction(e.a)}</b> · ${esc(e.who)} <span style="color:var(--muted)">${esc(e.id || '')}</span></span><span class="d">${esc(e.d)}</span><small>${esc((e.t || '').slice(6))}${e.src ? ' · ' + esc(e.src) : ''}</small></div>`;
   });
   return h;
 }
@@ -446,14 +566,14 @@ function statsHtml(){
   const all = (state && state.stats) || [];
   const m = statMonth || (all[0] && all[0].m) || curMonth();
   const st = all.find(s => s.m === m);
-  let h = head('Траты по разделам') + monthsHtml(m);
+  let h = head('Аналитика', 'chart-pie') + monthsHtml(m);
   if (!st || !st.sections.length) return h + '<div class="row"><span>За этот месяц расходов пока нет</span></div>';
   const total = st.sections.reduce((a, x) => a + x.sum, 0) || 1;
   const pct = v => (v / total * 100 >= 10 ? Math.round(v / total * 100) : (v / total * 100).toFixed(1).replace('.', ',')) + '%';
   h += `<div class="donut">${donutSvg(st.sections, total)}<div class="ctr"><b class="neg">−${fmt(st.spent)}</b><small>р. ПМР за ${MONTHS[Number(m.slice(5)) - 1].toLowerCase()}</small></div></div>`;
   st.sections.forEach(x => {
     const o = openSec.has(x.name);
-    h += `<button class="secrow ${o ? 'open' : ''}" data-sec="${esc(x.name)}"><span class="sw" style="background:${x.color}"></span><span class="nm">${x.icon} ${esc(x.name)}</span><span class="pc">${pct(x.sum)}</span><b>${fmt(x.sum)}</b><span class="ar">›</span></button>`;
+    h += `<button class="secrow ${o ? 'open' : ''}" data-sec="${esc(x.name)}"><span class="sw" style="background:${x.color}"></span><span class="nm"><span class="si">${ic(SEC_IC[x.name] || 'circle-help')}</span>${esc(x.name)}</span><span class="pc">${pct(x.sum)}</span><b>${fmt(x.sum)}</b><span class="ar">›</span></button>`;
     if (o) {
       h += '<div class="cats">';
       x.cats.forEach(c => {
@@ -483,7 +603,7 @@ function getRates(){
 }
 const nf = (v, d) => { if (!isFinite(v)) return ''; const s = v.toFixed(d).replace(/\.?0+$/, ''); const [i, f] = s.split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? ',' + f : ''); };
 function converterHtml(){
-  let h = head('💱 Конвертер');
+  let h = head('Конвертер', 'arrow-left-right');
   CURS.forEach(([c, sym, name]) => h += `<label class="cv"><span class="cc">${sym}</span><span class="cn">${name}<small data-r="${c}"></small></span><input data-c="${c}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`);
   h += `<div class="cv-note"><span id="cvDate"></span><button id="cvClear">Очистить</button></div>`;
   return h;
@@ -526,12 +646,11 @@ function renderFeed(){
   const byId = {}; ((state && state.recent) || []).forEach(r => byId[r.id] = r);
   const fresh = feed.filter(f => now - (f.ts || 0) < 5 * 60000).slice(0, 3).map(f => f.id && byId[f.id] ? byId[f.id] : f);
   let h = '';
-  qs.forEach(q => h += `<div class="item q"><div class="t">⚠️ <b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(q.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(q.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="ib"><button class="y" data-pid="${q.pid}" data-k="1">➕ Другая</button><button data-pid="${q.pid}" data-k="0">🗑 То же самое</button></div></div></div>`);
+  qs.forEach(q => h += `<div class="item q"><span class="ico">${ic('triangle-alert')}</span><div class="t"><b>Похожее уже записано</b><div class="m" style="color:var(--text)">Новое: ${esc(q.line)}</div><div class="m" style="white-space:pre-line">Уже есть:\n${esc(q.dupLine)}</div><div class="m">Это другая трата или то же самое?</div><div class="ib"><button class="y" data-pid="${q.pid}" data-k="1">Другая трата</button><button data-pid="${q.pid}" data-k="0">То же самое</button></div></div></div>`);
   queue.forEach(q => h += queueHtml(q));
   fresh.forEach(it => {
     if (it.reply) { h += `<div class="item"><div class="t">${esc(it.reply)}<div class="m">${esc(it.time || '')}</div></div></div>`; return; }
-    const x = it.x || undoing.has(it.id);
-    h += `<div class="item" style="${x ? 'opacity:.45' : ''}"><div class="t"><span style="${x ? 'text-decoration:line-through' : ''}">${esc(it.line)}</span><div class="m">${esc(it.who || '')}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date || '')} · #${it.id}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div></div>${x ? '' : `<button class="undo" data-id="${it.id}">↩️ отменить</button>`}</div>`;
+    h += recentHtml(it);
   });
   box.innerHTML = h;
   box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
@@ -540,17 +659,25 @@ function renderFeed(){
   box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeQueued(b.dataset.del));
   renderNet();
 }
+// Запись в ленте; секретный подарок для смотрящего — без суммы и подробностей (их нет даже в данных телефона)
+function recentHtml(it){
+  if (it.secret) return `<div class="item secret" style="${it.x ? 'opacity:.45' : ''}"><span class="ico">${ic('gift')}</span><div class="t"><b>Секретная покупка</b> · <span class="blur">−0 000 р.</span><div class="m">от ${esc(it.who || '')} · ${esc(it.date || '')} · ${it.x ? 'отменена' : 'сюрприз 🤫'}</div></div></div>`;
+  const x = it.x || undoing.has(it.id);
+  return `<div class="item" style="${x ? 'opacity:.45' : ''}"><div class="t"><span style="${x ? 'text-decoration:line-through' : ''}">${esc(it.line)}</span><div class="m">${esc(it.who || '')}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date || '')} · #${it.id}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div>${it.gift ? `<span class="badge">${ic('eye-off')}скрыто от: ${esc(it.gift)}</span>` : ''}</div>${x ? '' : `<button class="undo" data-id="${it.id}">${ic('undo-2')} отменить</button>`}</div>`;
+}
 function queueHtml(q){
   const s = q.status || 'new', tries = q.tries || 0;
   const sending = s === 'sending' || s === 'new';
   const slow = s === 'sending' && Date.now() - (q.sentAt || 0) > 12000;
   let ico = '<div class="spin"></div>', cls = 'wait', msg = '';
-  if (sending) msg = slow ? 'сервер распознаёт… ещё пара секунд' : 'отправляю…';
+  if (sending) msg = slow ? 'распознаю… ещё пара секунд' : 'отправляю…';
   else if (s === 'busy') msg = 'сервер ещё обрабатывает — дождусь ответа';
-  else if (s === 'auth') { ico = '<span class="ico">⚠️</span>'; cls = 'bad'; msg = 'нет доступа — нажмите кнопку с буквой вверху и вставьте код из бота заново. Запись сохранена.'; }
-  else { ico = '<span class="ico">⏳</span>'; msg = (q.err ? 'не получилось (' + esc(q.err) + ')' : 'нет связи') + ' — сохранено на телефоне, отправлю сам' + (tries ? ' · попытка ' + tries : ''); }
-  const btns = sending || s === 'busy' ? '' : `<div class="ib"><button data-retry="${q.cid}">↻ Отправить сейчас</button><button class="${delArmed === q.cid ? 'warn' : ''}" data-del="${q.cid}">${delArmed === q.cid ? 'Точно удалить?' : '✕'}</button></div>`;
-  return `<div class="item ${cls}">${ico}<div class="t">${esc(q.label)}<div class="m">${msg}</div>${btns}</div></div>`;
+  else if (s === 'auth') { ico = `<span class="ico">${ic('circle-alert')}</span>`; cls = 'bad'; msg = 'нет доступа — нажмите кнопку с буквой вверху и вставьте код из бота заново. Запись сохранена.'; }
+  else { ico = `<span class="ico">${ic(navigator.onLine === false ? 'cloud-off' : 'clock-3')}</span>`; msg = (q.err ? 'не получилось (' + esc(q.err) + ')' : 'нет связи') + ' — сохранено на телефоне, отправлю сам' + (tries ? ' · попытка ' + tries : ''); }
+  const kindIc = ic(q.kind === 'voice' ? 'mic' : q.kind === 'photo' ? 'camera' : 'keyboard');
+  const label = q.kind === 'voice' ? 'Голосовое · ' + (q.dur || '') + ' с' : q.kind === 'photo' ? 'Фото чека' : (q.text || '');
+  const retry = sending || s === 'busy' ? '' : `<button data-retry="${q.cid}">${ic('rotate-cw')} Отправить сейчас</button>`;
+  return `<div class="item ${cls}">${ico}<div class="t">${kindIc} ${esc(label)}<div class="m">${msg}</div><div class="ib">${retry}<button data-del="${q.cid}">${ic('x')} Отменить</button></div></div></div>`;
 }
 function renderNet(){
   const off = navigator.onLine === false, n = queue.length;
@@ -593,7 +720,8 @@ async function flush(force){
   const slowTick = setTimeout(renderFeed, 12500);
   try {
     const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts }, 120000, ctrl);
-    if (j.busy) { q.status = 'busy'; q.next = Date.now() + 6000; }
+    if (!queue.includes(q)) { /* отменили, пока ждали ответ */ }
+    else if (j.busy) { q.status = 'busy'; q.next = Date.now() + 6000; }
     else if (j.ok) {
       queue = queue.filter(x => x.cid !== q.cid); await unpersist(q.cid);
       const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -607,6 +735,7 @@ async function flush(force){
     q.tries = (q.tries || 0) + 1; q.status = 'retry'; q.err = '';
     q.next = ctrl.manual ? 0 : Date.now() + BACKOFF[Math.min(q.tries - 1, BACKOFF.length - 1)] * 1000;
   }
+  if (ctrl.dropped) { sending = null; renderFeed(); return; }
   clearTimeout(slowTick);
   sending = null;
   if (queue.includes(q)) await persist(q);
@@ -620,11 +749,20 @@ async function enqueue(item){
   await persist(item);        // сначала сохраняем на телефоне, потом отправляем
   flush();
 }
+// ✕ на записи: убираем с телефона, а если она уже ушла на сервер — просим сервер не записывать (или отменить записанное)
+let drops = LS.get('drops', []);
 async function removeQueued(cid){
-  if (delArmed !== cid) { delArmed = cid; renderFeed(); setTimeout(() => { if (delArmed === cid) { delArmed = null; renderFeed(); } }, 3500); return; }
-  delArmed = null;
-  if (sending && sending.cid === cid) { sending.ctrl.manual = true; sending.ctrl.abort(); }
-  queue = queue.filter(x => x.cid !== cid); await unpersist(cid); renderFeed();
+  const q = queue.find(x => x.cid === cid);
+  if (sending && sending.cid === cid) { sending.ctrl.manual = true; sending.ctrl.dropped = true; sending.ctrl.abort(); }
+  queue = queue.filter(x => x.cid !== cid); await unpersist(cid);
+  if (q && (q.sentAt || q.tries)) { drops.push(cid); LS.set('drops', drops); sendDrops(); }
+  toast('Отменено'); renderFeed();
+}
+async function sendDrops(){
+  for (const cid of drops.slice()) {
+    try { const j = await api({ action: 'drop', cid }, 30000); if (j && j.ok) { drops = drops.filter(x => x !== cid); LS.set('drops', drops); if (j.state) setState(j.state); } }
+    catch(e){ break; }
+  }
 }
 // Вернулись в приложение / появился интернет: зависшую отправку обрываем и повторяем сразу (сервер не запишет дважды)
 function wake(){
@@ -638,7 +776,7 @@ window.addEventListener('online', () => { renderNet(); wake(); });
 window.addEventListener('offline', renderNet);
 window.addEventListener('pageshow', wake);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
-setInterval(() => flush(), 4000);
+setInterval(() => { flush(); if (drops.length) sendDrops(); }, 4000);
 setInterval(() => { if (!document.hidden) refresh(); }, 45000);
 
 async function answer(pid, keep){
@@ -680,14 +818,20 @@ async function startRec(){
     const src = ctx.createMediaStreamSource(stream);
     const proc = ctx.createScriptProcessor(4096, 1, 1);
     const chunks = [];
-    proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    const rc = { ctx, src, proc, chunks, rate: ctx.sampleRate, t0: Date.now(), peak: 0 };
+    proc.onaudioprocess = e => {
+      const d = e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d));
+      let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] * d[i];
+      rc.peak = Math.max(rc.peak, Math.sqrt(s / (d.length / 4)));              // громкость — чтобы не отправлять тишину
+    };
     src.connect(proc); proc.connect(ctx.destination);
-    rec = { ctx, src, proc, chunks, rate: ctx.sampleRate, t0: Date.now() };
+    rec = rc;
     mic.classList.add('rec'); stage.classList.add('rec-on');
     if (navigator.vibrate) navigator.vibrate(15);
     timerInt = setInterval(() => {
       const s = Math.floor((Date.now() - rec.t0) / 1000);
-      hint.innerHTML = (tapMode ? 'Нажмите, чтобы отправить · ' : 'Отпустите, чтобы отправить · ') + `<span class="timer num">${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</span>`;
+      const t = `<span class="timer num">${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</span>`;
+      hint.innerHTML = willX ? 'Отпустите — запись отменится' : (tapMode ? 'Нажмите кнопку ещё раз, чтобы отправить · ' : 'Отпустите — отправить · уведите палец — отменить · ') + t;
       if (s >= 90) stopRec(true);
     }, 200);
   } catch(e) { rec = null; toast('Нет доступа к микрофону. Разрешите его в настройках Safari.'); }
@@ -696,13 +840,14 @@ function stopRec(send){
   if (!rec) return;
   const r = rec; rec = null; tapMode = false;
   clearInterval(timerInt); hint.textContent = HINT;
-  mic.classList.remove('rec'); stage.classList.remove('rec-on');
+  mic.classList.remove('rec'); stage.classList.remove('rec-on', 'willx'); willX = false;
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
   try { r.ctx.close(); } catch(e){}
   const dur = (Date.now() - r.t0) / 1000;
-  if (!send) return;
+  if (!send) return toast('Запись отменена');
   if (dur < 0.8) return toast('Слишком коротко — зажмите и говорите');
-  enqueue({ kind: 'voice', mime: 'audio/wav', data: encodeWav(r.chunks, r.rate, 16000), label: '🎙 Голосовое · ' + Math.round(dur) + ' с' });
+  if (r.peak < 0.006) return toast('Тишина — ничего не отправил');
+  enqueue({ kind: 'voice', mime: 'audio/wav', data: encodeWav(r.chunks, r.rate, 16000), dur: Math.round(dur), label: 'Голосовое' });
 }
 function encodeWav(chunks, inRate, outRate){
   let len = 0; chunks.forEach(c => len += c.length);
@@ -725,15 +870,29 @@ function encodeWav(chunks, inRate, outRate){
 }
 function b64(bytes){ let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
 
-mic.addEventListener('pointerdown', e => { e.preventDefault(); if (rec && tapMode) { stopRec(true); return; } downAt = Date.now(); startRec(); });
+// Удержание: отпустил — отправка; увёл палец в сторону и отпустил — отмена. Короткое нажатие — режим «нажал, говоришь, нажал ещё раз»
+let willX = false, sx = 0, sy = 0;
+mic.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (rec && tapMode) { stopRec(true); return; }
+  try { mic.setPointerCapture(e.pointerId); } catch(_){}
+  sx = e.clientX; sy = e.clientY; willX = false; downAt = Date.now(); startRec();
+});
+mic.addEventListener('pointermove', e => {
+  if (!downAt || tapMode) return;
+  const far = Math.hypot(e.clientX - sx, e.clientY - sy) > 90;
+  if (far !== willX) { willX = far; stage.classList.toggle('willx', far); }
+});
 const up = () => {
   if (!rec && !downAt) return;
   const held = Date.now() - downAt; downAt = 0;
-  if (held < 350) { tapMode = true; return; }     // короткое нажатие — «нажал, говоришь, нажал ещё раз»
+  if (willX) { stopRec(false); return; }
+  if (held < 350) { tapMode = true; return; }
   if (!tapMode) stopRec(true);
 };
 mic.addEventListener('pointerup', up);
-mic.addEventListener('pointercancel', up);
+mic.addEventListener('pointercancel', () => { if (rec && !tapMode) stopRec(false); downAt = 0; });
+$('recX').addEventListener('click', () => stopRec(false));
 mic.addEventListener('contextmenu', e => e.preventDefault());
 
 /* ================= фото чека ================= */
@@ -770,7 +929,8 @@ function demoApi(b){
     rates: { USD: 1, EUR: .8961, RUB: 80.6182, MDL: 18.0264, PRB: 16.1 }, ratesAt: '04.11.2026',
     wallets: [{ name: 'Наличные ПМР', bal: 8420, sym: 'р. ПМР' }, { name: 'Наличные USD', bal: 350, sym: '$' }, { name: 'Карта РФ', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', bal: 900, sym: 'лей' }],
     totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 975 }, { cur: 'RUB', sym: '₽', v: 87730 }, { cur: 'MDL', sym: 'лей', v: 19615 }],
-    log: [{ t: '04.11 01:20', k: curMonth() + '-04', who: 'Юлия', a: '✅ записал(а)', id: '#14', d: '🔴 −100 р. ПМР · Продукты · Шериф · состав: Хлеб 12 (Продукты), Семечки 18 (Вкусняшки и баловство), Энергетик 25 (Вкусняшки и баловство), Туалетная бумага 45 (Бытовая химия и хозтовары)', src: 'приложение · фото' },
+    log: [{ t: '04.11 03:10', k: curMonth() + '-04', who: 'Юлия', a: '🎁 секретная покупка', id: '', d: 'Подробности скрыты — это сюрприз 🤫', src: '', secret: true },
+      { t: '04.11 01:20', k: curMonth() + '-04', who: 'Юлия', a: '✅ записал(а)', id: '#14', d: '🔴 −100 р. ПМР · Продукты · Шериф · состав: Хлеб 12 (Продукты), Семечки 18 (Вкусняшки и баловство), Энергетик 25 (Вкусняшки и баловство), Туалетная бумага 45 (Бытовая химия и хозтовары)', src: 'приложение · фото' },
       { t: '04.11 01:22', k: curMonth() + '-04', who: 'Сергей', a: '📌 правило', id: '', d: 'энергетик → Вкусняшки и баловство · перенесено записей: 1', src: '' },
       { t: '03.11 18:40', k: curMonth() + '-03', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '03.11 12:01', k: curMonth() + '-03', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и рестораны · кофе', src: '' }, { t: '03.11 10:05', k: curMonth() + '-03', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Квартира и коммуналка · квартира', src: 'бот · голос' }],
     recent: [{ id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '03.11 18:40' }], pending: [],
