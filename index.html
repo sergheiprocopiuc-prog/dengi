@@ -360,13 +360,13 @@ body:not(.in-sec) .fab{display:none}
 body.ny{--ice:rgba(186,226,255,.26)}
 body.ny .seg,body.ny .act,body.ny .who,body.ny .list,body.ny .card,body.ny .fi{border-color:var(--ice)}
 body.ny .seg,body.ny .act{position:relative}
-body.ny .seg::before,body.ny .act::before{content:"";position:absolute;left:12px;right:12px;top:-6px;height:11px;pointer-events:none;z-index:2;
+body.ny .seg::before{content:"";position:absolute;left:12px;right:12px;top:-6px;height:11px;pointer-events:none;z-index:2;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='11'%3E%3Cpath d='M0 11V6c4-5 9-6 14-3 4-4 10-4 14 0 5-3 10-3 14 1 5-4 10-3 14 1v6z' fill='%23f4fbff'/%3E%3C/svg%3E") repeat-x;
   background-size:56px 11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.92}
 body.ny .seg::after{content:"";position:absolute;left:20px;right:20px;bottom:-10px;height:10px;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='10'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e9f6ff' stop-opacity='.85'/%3E%3Cstop offset='1' stop-color='%23bfe3ff' stop-opacity='.05'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M4 0l2 8 2-8M17 0l1.5 5 1.5-5M29 0l2.5 10 2.5-10M44 0l1.5 6 1.5-6M55 0l2 7 2-7' fill='url(%23g)'/%3E%3C/svg%3E") repeat-x;background-size:64px 10px}
 body.ny .micwrap::before{border-color:rgba(205,236,255,.3)}
-body.ny .mic::before{content:"";position:absolute;top:.8%;left:29%;right:29%;height:7.5%;pointer-events:none;
+body.ny .mic::before{display:none;content:"";position:absolute;top:.8%;left:29%;right:29%;height:7.5%;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 14C10 4 30 0 50 0s40 4 50 14c-6 3-10 0-15 3-5 3-8-2-14 1-6 3-9-1-15 1-6 2-9-2-15 0-6 2-9-1-14 0C15 21 8 15 0 14z' fill='%23f6fbff'/%3E%3C/svg%3E") no-repeat center/100% 100%;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.92}
 .nyscene{position:absolute;left:0;right:0;bottom:-4px;height:64px;pointer-events:none;z-index:0;display:none}
@@ -456,6 +456,10 @@ body.val .mic .vhearts{position:absolute;left:-8%;top:-8%;width:116%;height:116%
 body.val .mic>svg:not(.vhearts){position:absolute;left:48.6%;top:26.5%;width:26%;height:26%;z-index:1}
 body.val .rec-on .mic .vhearts{filter:drop-shadow(0 0 calc(10px + var(--lvl,0) * 34px) rgba(255,92,104,.85)) drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 body.val .rec-on .mic{animation:vbeat 1.4s ease-in-out infinite}
+
+/* ---------- Новый год: холсты ---------- */
+.nycanvas{position:absolute;left:0;top:0;pointer-events:none}
+.nysnow{position:fixed;left:0;top:0;z-index:25;pointer-events:none}
 
 </style>
 </head>
@@ -593,6 +597,204 @@ function flakeSvg(v) {
 document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = ic(el.dataset.ic));
 document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.dataset.art]);
 
+/* ================= Новый год: небо (снежинки, падающие звёзды, кометы, подарки) ================= */
+const NY_REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function nyCanvas(cls, parent, before){
+  const cv = document.createElement('canvas'); cv.className = cls;
+  if (before && parent.firstChild) parent.insertBefore(cv, parent.firstChild); else parent.appendChild(cv);
+  const ctx = cv.getContext('2d'); const o = { cv, ctx, W: 0, H: 0 };
+  const size = () => { const d = Math.min(2, window.devicePixelRatio || 1); o.W = innerWidth; o.H = innerHeight; cv.width = o.W * d; cv.height = o.H * d; cv.style.width = o.W + 'px'; cv.style.height = o.H + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0); };
+  size(); addEventListener('resize', size); return o;
+}
+// Снежинки-кристаллы рисуем один раз в маленькие картинки, потом только переносим — так быстро
+function flakeSprite(kind, px){
+  const d = Math.min(2, window.devicePixelRatio || 1), S = Math.ceil(px * d) + 4, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), R = (S - 4) / 2; g.translate(S / 2, S / 2);
+  g.strokeStyle = '#F4FBFF'; g.fillStyle = '#F4FBFF'; g.lineCap = 'round'; g.lineWidth = Math.max(.7, R * .085);
+  g.shadowColor = 'rgba(190,225,255,.9)'; g.shadowBlur = R * .35;
+  for (let i = 0; i < 6; i++) {
+    g.save(); g.rotate(i * Math.PI / 3); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -R);
+    if (kind === 0) { [.35, .58, .8].forEach((t, k) => { const l = R * (.32 - k * .07); g.moveTo(0, -R * t); g.lineTo(-l, -R * t - l); g.moveTo(0, -R * t); g.lineTo(l, -R * t - l); }); }
+    if (kind === 1) { g.moveTo(0, -R * .5); g.lineTo(-R * .28, -R * .5); g.moveTo(0, -R * .5); g.lineTo(R * .28, -R * .5); g.moveTo(-R * .16, -R * .78); g.lineTo(0, -R * .64); g.lineTo(R * .16, -R * .78); }
+    if (kind === 2) { g.moveTo(0, -R * .62); g.lineTo(-R * .3, -R * .9); g.moveTo(0, -R * .62); g.lineTo(R * .3, -R * .9); g.moveTo(0, -R * .3); g.lineTo(-R * .2, -R * .45); g.moveTo(0, -R * .3); g.lineTo(R * .2, -R * .45); }
+    g.stroke(); g.restore();
+  }
+  g.beginPath(); g.arc(0, 0, R * .14, 0, 6.283); g.fill();
+  if (kind === 1) { g.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 - Math.PI / 2; g[i ? 'lineTo' : 'moveTo'](Math.cos(a) * R * .3, Math.sin(a) * R * .3); } g.closePath(); g.stroke(); }
+  return { c, s: S / d };
+}
+function nySky(fx){
+  if (NY_REDUCED) return;
+  const { ctx, cv } = nyCanvas('nycanvas', fx, true), o = { get W(){ return cv.clientWidth || innerWidth; }, get H(){ return cv.clientHeight || innerHeight; } };
+  const R = (a, b) => a + Math.random() * (b - a);
+  const sprites = []; [0, 1, 2].forEach(k => [10, 15, 22].forEach(px => sprites.push(flakeSprite(k, px))));
+  // слои глубины: дальние — мелкие точки, ближние — крупные кристаллы
+  const flakes = [];
+  const mkFlake = (y) => { const z = Math.random(), big = z > .62; return { x: R(-20, o.W + 20), y: y == null ? R(-60, -10) : y, z,
+    sp: big ? sprites[Math.floor(R(0, sprites.length))] : null, r: big ? 0 : R(.8, 2.2), v: 18 + z * 46, sw: R(10, 30) * (.4 + z), ph: R(0, 6.28), f: R(.4, 1), rot: R(0, 6.28), vr: R(-.6, .6), a: .3 + z * .5 }; };
+  const N = Math.round(Math.min(70, Math.max(40, o.W / 6)));
+  for (let i = 0; i < N; i++) flakes.push(mkFlake(R(0, o.H)));
+  const stars = [], comets = [], gifts = [], sparks = [];
+  let tStar = R(1, 3), tComet = R(5, 8), tGift = R(2, 4), wind = 0, windT = 0;
+  const GIFT_COL = [['#D81A2C', '#E8C58E'], ['#1F8F5A', '#E8C58E'], ['#2F64C9', '#E6EEF7'], ['#D9AD69', '#E6EEF7'], ['#8E2BB8', '#E8C58E']];
+  const drawGift = (g) => {
+    const s = g.s; ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(g.rot);
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 6;
+    ctx.fillStyle = g.c[0]; ctx.fillRect(-s / 2, -s / 2 + s * .18, s, s * .82);           // коробка
+    ctx.fillStyle = g.c[0]; ctx.fillRect(-s * .56, -s / 2, s * 1.12, s * .24);            // крышка
+    ctx.shadowBlur = 0; ctx.fillStyle = g.c[1];
+    ctx.fillRect(-s * .08, -s / 2, s * .16, s);                                           // лента
+    ctx.fillRect(-s * .56, -s / 2 + s * .07, s * 1.12, s * .1);
+    ctx.beginPath(); ctx.ellipse(-s * .17, -s / 2 - s * .1, s * .17, s * .1, -.5, 0, 6.283); ctx.ellipse(s * .17, -s / 2 - s * .1, s * .17, s * .1, .5, 0, 6.283); ctx.fill();   // бант
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(-s / 2, -s / 2 + s * .18, s * .22, s * .82);
+    ctx.restore();
+  };
+  let last = performance.now();
+  const tick = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      const W = o.W, H = o.H;
+      ctx.clearRect(0, 0, W, H);
+      windT -= dt; if (windT <= 0) { windT = R(4, 9); wind = R(-22, 22); }
+      // снежинки
+      flakes.forEach((f, i) => {
+        f.ph += dt * f.f; f.y += f.v * dt; f.x += (Math.sin(f.ph) * f.sw * .9 + wind * (.4 + f.z)) * dt; f.rot += f.vr * dt;
+        if (f.sp) { ctx.globalAlpha = f.a; ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.rot); ctx.drawImage(f.sp.c, -f.sp.s / 2, -f.sp.s / 2, f.sp.s, f.sp.s); ctx.restore(); }
+        else { ctx.globalAlpha = f.a * .8; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 6.283); ctx.fillStyle = '#EAF6FF'; ctx.fill(); }
+        if (f.y > H + 30 || f.x < -40 || f.x > W + 40) flakes[i] = mkFlake();
+      });
+      ctx.globalAlpha = 1;
+      // падающие звёзды — быстрые росчерки
+      if ((tStar -= dt) <= 0) { tStar = R(3.5, 8); const dir = Math.random() < .5 ? -1 : 1; stars.push({ x: R(W * .15, W * .85), y: R(20, H * .35), vx: dir * R(380, 520), vy: R(160, 260), life: 0, max: R(.7, 1.1) }); }
+      for (let i = stars.length - 1; i >= 0; i--) {
+        const s = stars[i]; s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+        const k = s.life / s.max, al = k < .2 ? k / .2 : 1 - (k - .2) / .8, sp = Math.hypot(s.vx, s.vy), tl = 110;
+        const tx = s.x - s.vx / sp * tl, ty = s.y - s.vy / sp * tl, g = ctx.createLinearGradient(s.x, s.y, tx, ty);
+        g.addColorStop(0, `rgba(255,255,255,${.95 * al})`); g.addColorStop(.3, `rgba(232,197,142,${.45 * al})`); g.addColorStop(1, 'rgba(232,197,142,0)');
+        ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(tx, ty); ctx.stroke();
+        ctx.beginPath(); ctx.arc(s.x, s.y, 1.8, 0, 6.283); ctx.fillStyle = `rgba(255,255,255,${al})`; ctx.shadowColor = '#fff'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+        if (s.life >= s.max) stars.splice(i, 1);
+      }
+      // кометы — медленные, с длинным светящимся хвостом
+      if ((tComet -= dt) <= 0) { tComet = R(14, 24); const dir = Math.random() < .5 ? -1 : 1; comets.push({ x: dir > 0 ? -40 : W + 40, y: R(40, H * .3), vx: dir * R(110, 160), vy: R(18, 40), tail: [] }); }
+      for (let i = comets.length - 1; i >= 0; i--) {
+        const c = comets[i]; c.x += c.vx * dt; c.y += c.vy * dt; c.tail.push([c.x, c.y]); if (c.tail.length > 60) c.tail.shift();
+        c.tail.forEach((t, k) => { const f = k / c.tail.length; ctx.beginPath(); ctx.arc(t[0] + R(-1, 1), t[1] + R(-1, 1), 3.4 * f, 0, 6.283); ctx.fillStyle = `rgba(190,225,255,${(.32 * f * f).toFixed(3)})`; ctx.fill(); });
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 10); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(210,235,255,.7)'); g.addColorStop(1, 'rgba(210,235,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, 10, 0, 6.283); ctx.fill();
+        if (c.x < -120 || c.x > W + 120) comets.splice(i, 1);
+      }
+      // подарки пролетают по дуге и сыплют золотые и серебряные искры
+      if ((tGift -= dt) <= 0) { tGift = R(9, 16); const dir = Math.random() < .5 ? -1 : 1; gifts.push({ x: dir > 0 ? -30 : W + 30, y0: R(H * .12, H * .55), t: 0, vx: dir * R(70, 110), s: R(13, 19), c: GIFT_COL[Math.floor(R(0, GIFT_COL.length))], rot: 0, amp: R(14, 30), y: 0 }); }
+      for (let i = gifts.length - 1; i >= 0; i--) {
+        const g = gifts[i]; g.t += dt; g.x += g.vx * dt; g.y = g.y0 + Math.sin(g.t * 1.6) * g.amp; g.rot = Math.sin(g.t * 2.2) * .25;
+        for (let k = 0; k < 2; k++) sparks.push({ x: g.x - Math.sign(g.vx) * g.s * .5 + R(-3, 3), y: g.y + R(-4, 6), vx: -g.vx * R(.05, .2) + R(-12, 12), vy: R(-10, 18), life: 0, max: R(.7, 1.4), r: R(.7, 1.8), gold: Math.random() < .6 });
+        drawGift(g);
+        if (g.x < -60 || g.x > W + 60) gifts.splice(i, 1);
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i]; p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 14 * dt;
+        const al = 1 - p.life / p.max, tw = .6 + .4 * Math.sin(p.life * 30 + i);
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fillStyle = p.gold ? `rgba(240,200,120,${(al * tw).toFixed(3)})` : `rgba(230,238,247,${(al * tw).toFixed(3)})`; ctx.fill();
+        if (p.life >= p.max) sparks.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ================= Новый год: снег сыплется с меню на кнопку микрофона и пересыпается на кнопки внизу ================= */
+function nySnowPiles(){
+  if (NY_REDUCED) return;
+  const { ctx, cv } = nyCanvas('nysnow', document.body);
+  const Rn = (a, b) => a + Math.random() * (b - a);
+  const COL = 3;                                         // ширина столбика сугроба, px
+  let seg = null, mic = null, acts = [], tRect = 0;
+  const piles = new Map();                               // сугробы на кнопках «Чек» и «Текст»: высоты по столбикам
+  const cap = new Array(36).fill(0).map((_, k) => { const a = -Math.PI + k / 35 * Math.PI, t = Math.abs(a + Math.PI / 2); return t < .95 ? Math.max(0, 7 * Math.cos(t * 1.6)) : 0; });                     // шапка на кнопке микрофона: высоты по углам (верхняя половина круга)
+  const grains = [];
+  const rects = () => {
+    const vis = !document.body.classList.contains('in-sec') && !$('main').classList.contains('hidden');
+    if (!vis) { seg = mic = null; acts = []; return; }
+    const s = $('seg').getBoundingClientRect(), m = $('mic').getBoundingClientRect();
+    seg = s; mic = { cx: m.left + m.width / 2, cy: m.top + m.height / 2, r: m.width / 2 };
+    acts = [...document.querySelectorAll('.actions .act')].map((el, i) => { const b = el.getBoundingClientRect(); const top = b.top - 3, x0 = b.left + 10, x1 = b.right - 10;
+      const w = Math.round((x1 - x0) / COL); if (!piles.has(i) || piles.get(i).w !== w) piles.set(i, { w, h: new Array(w).fill(0).map((_, k) => 5 + 4 * Math.sin(k / (w - 1) * Math.PI) + Math.sin(k * .9) * .8) });
+      return { i, top, x0, x1 }; });
+  };
+  const capAt = a => { const k = Math.round((a + Math.PI) / Math.PI * (cap.length - 1)); return k >= 0 && k < cap.length ? k : -1; };   // a ∈ [-π, 0]
+  const relax = (h, maxStep) => { for (let i = 1; i < h.length; i++) { const d = h[i] - h[i - 1]; if (Math.abs(d) > maxStep) { const m = (Math.abs(d) - maxStep) / 2 * Math.sign(d); h[i] -= m; h[i - 1] += m; } } };
+  let spawnT = 0, last = performance.now();
+  const tick = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if ((tRect -= dt) <= 0) { tRect = .4; rects(); }
+    const W = cv.clientWidth || innerWidth, H = cv.clientHeight || innerHeight;
+    ctx.clearRect(0, 0, W, H);
+    if (!document.hidden && seg && mic) {
+      // снег сыплется с нижнего края меню; больше всего — над кнопкой микрофона
+      spawnT -= dt;
+      while (spawnT <= 0) {
+        spawnT += Rn(.025, .07);
+        const overMic = Math.random() < .6, x = overMic ? mic.cx + Rn(-mic.r * .95, mic.r * .95) : Rn(seg.left + 14, seg.right - 14);
+        grains.push({ x, y: seg.bottom + 4, vx: Rn(-8, 8), vy: Rn(10, 40), r: Rn(1.3, 2.6), mode: 'fall', a: Rn(.8, 1) });
+      }
+      for (let i = grains.length - 1; i >= 0; i--) {
+        const g = grains[i];
+        if (g.mode === 'fall') {
+          g.vy = Math.min(150, g.vy + 240 * dt); g.vx *= .995; g.x += g.vx * dt; g.y += g.vy * dt;
+          // кнопка микрофона: круг + шапка снега на нём
+          const dx = g.x - mic.cx, dy = g.y - mic.cy, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx), k = a <= 0 ? capAt(a) : -1;
+          const surf = mic.r + 1 + (k >= 0 ? cap[k] : 0);
+          if (d < surf && dy < mic.r * .35) {
+            const nx = dx / d, ny = dy / d;
+            const top = Math.abs(a + Math.PI / 2) < .85;          // верхняя часть круга — снег налипает
+            if (k >= 0 && top && cap[k] < 15 - Math.abs(a + Math.PI / 2) * 11 && Math.random() < .6) { cap[k] += .7; grains.splice(i, 1); continue; }
+            g.x = mic.cx + nx * surf; g.y = mic.cy + ny * surf;
+            const vn = g.vx * nx + g.vy * ny; if (vn < 0) { g.vx -= vn * nx; g.vy -= vn * ny; }   // соскальзывает по склону
+            g.vx += nx * 26 * dt * 60 * (Math.random() * .3); g.vx *= .98; g.vy *= .98;
+            if (Math.abs(g.vx) < 6) g.vx += (dx >= 0 ? 1 : -1) * 6;
+          }
+          // кнопки внизу: часть оседает сугробом, часть ссыпается с краёв и падает дальше
+          for (const r of acts) {
+            if (g.x < r.x0 || g.x > r.x1) continue;
+            const p = piles.get(r.i), c = Math.min(p.w - 1, Math.max(0, Math.floor((g.x - r.x0) / COL)));
+            const yTop = r.top - p.h[c];
+            if (g.y >= yTop && g.y - g.vy * dt <= yTop + 3) {
+              const edge = Math.min(c, p.w - 1 - c) * COL, maxH = Math.min(14, 3 + edge * .4);
+              if (p.h[c] < maxH && Math.random() < .6) { p.h[c] += .8; if (c > 0) p.h[c - 1] += .25; if (c < p.w - 1) p.h[c + 1] += .25; grains.splice(i, 1); break; }
+              g.mode = 'slide'; g.r0 = r; g.dir = g.x < (r.x0 + r.x1) / 2 ? -1 : 1; g.vx = g.dir * Rn(30, 60); g.y = yTop; break;
+            }
+          }
+          if (g.mode === 'fall' && g.y > H + 10) grains.splice(i, 1);
+        } else if (g.mode === 'slide') {
+          const r = g.r0, p = piles.get(r.i); g.x += g.vx * dt;
+          if (g.x < r.x0 || g.x > r.x1) { g.mode = 'fall'; g.vy = 20; continue; }
+          const c = Math.min(p.w - 1, Math.max(0, Math.floor((g.x - r.x0) / COL))); g.y = r.top - p.h[c] - g.r * .5;
+        }
+        if (grains[i] === g) { ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 6.283); ctx.fillStyle = `rgba(246,251,255,${g.a})`; ctx.fill(); }
+      }
+      // сугробы понемногу «тают», чтобы снег всё время двигался
+      relax(cap, 1.2); for (let k = 0; k < cap.length; k++) cap[k] = Math.max(0, cap[k] - dt * .06);
+      const pg = (x, y, hgt) => { const gr = ctx.createLinearGradient(0, y - (hgt || 14), 0, y + 2); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.75, '#F4FAFF'); gr.addColorStop(1, '#C9E2F5'); return gr; };
+      // шапка на микрофоне
+      ctx.beginPath(); let started = false;
+      for (let k = 0; k < cap.length; k++) { const a = -Math.PI + k / (cap.length - 1) * Math.PI; if (Math.abs(a + Math.PI / 2) > 1.1) continue; const rr = mic.r + cap[k]; const x = mic.cx + Math.cos(a) * rr, y = mic.cy + Math.sin(a) * rr; started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true); }
+      for (let k = cap.length - 1; k >= 0; k--) { const a = -Math.PI + k / (cap.length - 1) * Math.PI; if (Math.abs(a + Math.PI / 2) > 1.1) continue; ctx.lineTo(mic.cx + Math.cos(a) * (mic.r - .5), mic.cy + Math.sin(a) * (mic.r - .5)); }
+      ctx.closePath(); ctx.fillStyle = pg(mic.cx, mic.cy - mic.r * .55, mic.r * .55); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 3; ctx.fill(); ctx.shadowBlur = 0;
+      // сугробы на кнопках
+      for (const r of acts) {
+        const p = piles.get(r.i); relax(p.h, 1.1); for (let k = 0; k < p.w; k++) p.h[k] = Math.max(4, p.h[k] - dt * .03);
+        ctx.beginPath(); ctx.moveTo(r.x0, r.top + 1);
+        for (let k = 0; k < p.w; k++) { const hh = (p.h[Math.max(0, k - 1)] + p.h[k] * 2 + p.h[Math.min(p.w - 1, k + 1)]) / 4; ctx.lineTo(r.x0 + k * COL + COL / 2, r.top - hh); }
+        ctx.lineTo(r.x1, r.top + 1); ctx.closePath(); ctx.fillStyle = pg(0, r.top); ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 2; ctx.fill(); ctx.shadowBlur = 0;
+      }
+    } else if (!seg) grains.length = 0;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 /* ================= праздничные украшения ================= */
 // Дата всегда по Кишинёву: праздник включается в 00:00 и выключается в 00:00 следующего дня по местному времени
 function chisinauDay(at){
@@ -652,9 +854,6 @@ const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke
     document.body.classList.add('ny');
     $('sIcon').innerHTML = '';
     let h = '';
-    const fl = [0, 1, 2].map(flakeSvg);
-    for (let i = 0; i < 22; i++) h += `<i class="flake" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(9, 20).toFixed(1)}px;--o:${r(.45, .9).toFixed(2)};--d:${r(11, 22).toFixed(1)}s;--l:-${r(0, 22).toFixed(1)}s;--w:${r(-34, 34).toFixed(0)}px;--r:${r(8, 20).toFixed(0)}s">${fl[i % 3]}</i>`;
-    for (let i = 0; i < 18; i++) h += `<i class="flake dot" style="--x:${r(0, 100).toFixed(1)}%;--s:${r(2, 4.5).toFixed(1)}px;--o:${r(.25, .6).toFixed(2)};--d:${r(9, 16).toFixed(1)}s;--l:-${r(0, 16).toFixed(1)}s;--w:${r(-20, 20).toFixed(0)}px"></i>`;
     let tr = ''; for (let i = 0; i < 9; i++) tr += `<i style="right:${i * 13}px;bottom:${(Math.sin(i) * 6 + 6).toFixed(0)}px;animation-delay:-${(i * .27).toFixed(2)}s;opacity:${(1 - i / 10).toFixed(2)}"></i>`;
     h += `<div class="sleigh"><div class="bob"><span class="trail">${tr}</span><span class="sl">${ART.sleigh}</span><span class="dr a">${ART.deer}</span><span class="dr b">${ART.deer}</span></div></div>`;
     fx.innerHTML = h;
@@ -662,6 +861,7 @@ const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke
     const cols = ['#ff525a', '#ffd166', '#46d08c', '#6fb6ff', '#dcaa6a'];
     let b = ''; for (let i = 0; i < 18; i++) b += `<i class="bulb" style="--c:${cols[i % cols.length]};--l:-${(i * .37 % 1.8).toFixed(2)}s"></i>`;
     g.innerHTML = b; document.body.appendChild(g);
+    nySky(fx); nySnowPiles();
   } else if (s === 'val') {
     document.body.classList.add('val');
     $('sIcon').innerHTML = '';
