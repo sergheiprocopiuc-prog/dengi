@@ -1152,8 +1152,21 @@ function renderFeed(){
     <div class="m">Новое: ${esc(stripEm(q.line))}</div><div class="m" style="white-space:pre-line">Уже есть: ${esc(stripEm(q.dupLine))}</div>
     <div class="btns"><button class="btn primary" data-pid="${q.pid}" data-k="1">${ic('plus')}Другая трата</button><button class="btn" data-pid="${q.pid}" data-k="0">То же самое</button></div></div></div>`);
   queue.forEach(q => h += queueHtml(q));
+  // «Входящие» на сервере: записи, которые сервер ещё распознаёт или уже разобрал сам
+  const myCids = new Set(feed.map(f => f.cid).filter(Boolean)), qCids = new Set(queue.map(q => q.cid));
+  inboxItems().forEach(x => {
+    if (qCids.has(x.cid) || dropping.has(x.cid)) return;
+    if (x.status === 'готово') {
+      if (x.who !== cfg.who || myCids.has(x.cid) || !x.result) return;
+      (x.result.items || []).forEach(i => h += recentHtml(byId[i.id] || { id: i.id, line: i.line, who: x.who, date: x.at }));
+      if (!(x.result.items || []).length && x.result.reply && !(x.result.pending || []).length) h += recentHtml({ reply: String(x.result.reply).replace(/<[^>]+>/g, ''), time: x.at });
+      return;
+    }
+    h += inboxHtml(x);
+  });
   fresh.forEach(it => h += recentHtml(it));
   box.innerHTML = h;
+  box.querySelectorAll('[data-ibdel]').forEach(b => b.onclick = () => dropInbox(b.dataset.ibdel));
   box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
   bindReveal(box);
   box.querySelectorAll('[data-pid]').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
@@ -1195,6 +1208,25 @@ function bindReveal(root){
     } catch(err){ toast('Нет связи — попробуйте ещё раз'); renderAll(); }
   });
 }
+/* ---------- «Входящие» сервера ---------- */
+const inboxItems = () => ((state && state.inbox) || []);
+let dropping = new Set();
+function inboxHtml(x){
+  const kindIc = ic(x.kind === 'voice' ? 'mic' : x.kind === 'photo' ? 'camera' : 'keyboard');
+  const label = (x.kind === 'voice' ? 'Голосовое' : x.kind === 'photo' ? 'Фото чека' : 'Сообщение') + ' · ' + esc(x.who) + ' · ' + esc(x.at) + (x.tg ? ' · Telegram' : '');
+  let ico = '<div class="spin"></div>', cls = '', msg = 'Распознаю на сервере…';
+  if (x.status === 'ждёт') { ico = ic('clock-3'); cls = 'warn'; msg = 'ИИ у Google сейчас не отвечает. Запись сохранена на сервере — он сам попробует снова' + (x.next ? ' через ' + Math.max(1, Math.round(x.next / 60)) + ' мин' : '') + ' (попытка ' + x.tries + '). Ничего делать не нужно, телефон можно закрыть'; }
+  if (x.status === 'ошибка') { ico = ic('circle-alert'); cls = 'bad'; msg = 'Так и не получилось распознать — запишите, пожалуйста, ещё раз'; }
+  const mine = x.who === cfg.who;
+  return `<div class="fi ${cls}"><span class="ico">${ico}</span><div class="t"><div class="tt">${kindIc} ${label}</div><div class="m">${msg}</div>${mine ? `<div class="btns"><button class="btn ghost" data-ibdel="${esc(x.cid)}">${ic('x')}${x.status === 'ошибка' ? 'Убрать' : 'Отменить'}</button></div>` : ''}</div></div>`;
+}
+async function dropInbox(cid){
+  dropping.add(cid); renderFeed();
+  try { const j = await api({ action: 'drop', cid }, 30000); if (j && j.state) setState(j.state); toast('Отменено'); }
+  catch(e){ dropping.delete(cid); renderFeed(); toast('Нет связи — попробуйте ещё раз'); }
+}
+// пока что-то распознаётся на сервере — обновляемся чаще, чтобы результат появился сам
+setInterval(() => { if (!document.hidden && cfg && inboxItems().some(x => x.status === 'распознаю' || x.status === 'ждёт')) refresh(); }, 10000);
 function queueHtml(q){
   const s = q.status || 'new', tries = q.tries || 0;
   const sending = s === 'sending' || s === 'new';
@@ -1260,8 +1292,8 @@ async function flush(force){
     else if (j.ok) {
       queue = queue.filter(x => x.cid !== q.cid); await unpersist(q.cid);
       const time = new Date(q.ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      (j.items || []).slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, who: cfg.who, date: time, ts: Date.now() }));
-      if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time, ts: Date.now() });
+      (j.items || []).slice().reverse().forEach(it => feed.unshift({ id: it.id, line: it.line, who: cfg.who, date: time, ts: Date.now(), cid: q.cid }));
+      if (j.reply) feed.unshift({ reply: j.reply.replace(/<[^>]+>/g, ''), time, ts: Date.now(), cid: q.cid });
       feed = feed.slice(0, 10); LS.set('feed', feed);
       if (j.state) setState(j.state);
     } else if (j.code === 'auth') { q.status = 'auth'; }
@@ -1477,7 +1509,7 @@ function demoApi(b){
       { t: '04.11 01:22', k: curMonth() + '-04', who: 'Сергей', a: '📌 правило', id: '', d: 'энергетик → Вкусняшки и баловство · перенесено записей: 1', src: '' },
       { t: '03.11 18:40', k: curMonth() + '-03', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '03.11 12:01', k: curMonth() + '-03', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и рестораны · кофе', src: '' }, { t: '03.11 10:05', k: curMonth() + '-03', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Квартира и коммуналка · квартира · дата 03.11 · «за квартиру три пятьсот»', src: 'бот · голос' }, { t: '02.11 09:30', k: curMonth() + '-02', who: 'Сергей', a: '✅ записал(а)', id: '#9', d: '🟢 +25 000 р. ПМР · Работа / клиенты · аванс · дата 02.11', src: 'приложение · текст' }, { t: '02.11 15:12', k: curMonth() + '-02', who: 'Юлия', a: '✅ записал(а)', id: '#8', d: '🔁 $100 → 1 610 р. ПМР · дата 02.11', src: 'приложение · голос' }],
     recent: [{ id: 15, line: '🔴 −450 р. ПМР · Подарки друг другу · цветы', who: 'Сергей', rec: 'Сергей', date: '04.11 07:40', gift: 'Юлия' }, { id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '03.11 18:40' }], pending: [],
-    myGifts: [15], lastRec: { date: '02.11', who: 'Юлия', days: 2 },
+    myGifts: [15], inbox: [], lastRec: { date: '02.11', who: 'Юлия', days: 2 },
     stats: [{ m: curMonth(), cmp: { label: 'к 1–4 октября', total: 12 }, title: 'Ноябрь', spent: 6240, earned: 25000, income: [{ name: 'Работа / клиенты', sum: 21000 }, { name: 'Подарки и помощь', sum: 3000 }, { name: 'Прочий доход', sum: 1000 }], sections: [
       { name: 'Дом и быт', icon: '🏠', color: '#dcaa6a', sum: 3780, d: -3, cats: [{ name: 'Квартира и коммуналка', sum: 3500, items: [['квартира', 3500]] }, { name: 'Бытовая химия и хозтовары', sum: 280, items: [['туалетная бумага', 145], ['мыло', 60], ['губки', 75]] }] },
       { name: 'Еда', icon: '🍽', color: '#e3141f', sum: 1720, d: 18, cats: [{ name: 'Продукты', sum: 940, d: 5, items: [['хлеб', 120], ['молоко', 160], ['мясо', 420], ['овощи', 240]] }, { name: 'Вкусняшки и баловство', sum: 330, d: 64, items: [['энергетик', 150], ['семечки', 90], ['шоколад', 90]] }, { name: 'Кафе и рестораны', sum: 450, items: [['кафе', 450]] }] },
@@ -1486,6 +1518,11 @@ function demoApi(b){
       { name: 'Здоровье', icon: '💊', color: '#46d08c', sum: 120, cats: [{ name: 'Аптека', sum: 120, items: [['витамины', 120]] }] }] }],
     debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
   return new Promise(r => setTimeout(() => {
+    if (b.action === 'add' && b.kind === 'voice' && /[?&]slowai\b/.test(location.search) && !st.inbox.some(x => x.cid === b.cid)) {
+      st.inbox.push({ cid: b.cid, who: cfg.who, kind: 'voice', status: 'ждёт', tries: 1, at: new Date().toTimeString().slice(0, 5), next: 60 });
+      setTimeout(() => { const x = st.inbox.find(y => y.cid === b.cid); if (x) { x.status = 'готово'; x.result = { items: [{ id: 501, line: '🔴 −52 р. ПМР · Аптека · аптека' }] }; st.recent.unshift({ id: 501, line: '🔴 −52 р. ПМР · Аптека · аптека', who: cfg.who, rec: cfg.who, date: 'сейчас' }); } }, 4000);
+      return r({ ok: true, accepted: true, queued: true, items: [], state: st });
+    }
     if (b.action === 'add') {
       if (b.kind === 'text' && /кварт/i.test(b.text)) { st.pending = [{ pid: 'demo' + Date.now(), line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (03.11)', dupLine: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира (03.11, записал(а) Сергей)' }]; return r({ ok: true, items: [], state: st }); }
       const l = b.kind === 'text' ? '🔴 −' + (b.text.match(/\d+/) || ['0'])[0] + ' р. ПМР · Продукты · ' + b.text.replace(/\d+/g, '').trim() : b.kind === 'photo' ? '🔴 −612 р. ПМР · Продукты · Шериф: мясо, овощи' : '🔴 −1 000 р. ПМР · Продукты · магазин';
@@ -1493,6 +1530,7 @@ function demoApi(b){
       st.log.unshift({ t: 'сейчас', k: new Date().toISOString().slice(0, 10), who: cfg.who, a: '✅ записал(а)', id: '#' + id, d: l, src: 'приложение · ' + b.kind });
       r({ ok: true, items: [{ id, line: l }], state: st });
     } else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
+    else if (b.action === 'drop') { st.inbox = st.inbox.filter(x => x.cid !== b.cid); r({ ok: true, state: st }); }
     else if (b.action === 'reveal') { st.log.unshift({ t: '04.11 07:45', k: curMonth() + '-04', who: 'Сергей', a: '🎁 раскрыл(а) подарок', id: '#' + b.id, d: '🔴 −450 р. ПМР · Подарки друг другу · цветы — подарок для Юлия', src: '' }); st.myGifts = []; st.recent.forEach(x => { if (x.id === b.id) x.gift = ''; }); r({ ok: true, state: st }); }
     else if (b.action === 'undo') { st.recent.forEach(x => { if (x.id === b.id) x.x = true; }); r({ ok: true, state: st }); }
     else if (b.action === 'reconcile') r({ ok: true, sid: 'demo', mismatches: 1, since: '02.11', emptyDays: ['03.11'], res: b.facts.map((f, i) => ({ wallet: f.wallet, sym: 'р. ПМР', diff: i ? 0 : -340 })), state: st });
