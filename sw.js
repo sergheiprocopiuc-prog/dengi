@@ -1,6 +1,6 @@
 // Кэш оболочки приложения — чтобы открывалось мгновенно, даже без сети
-const CACHE = 'dengi-v12';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'dengi-v13';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png','./fonts/manrope-cyrillic-wght-normal.woff2','./fonts/manrope-latin-wght-normal.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
