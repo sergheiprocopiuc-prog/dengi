@@ -1198,10 +1198,10 @@ function bindReveal(root){
 function queueHtml(q){
   const s = q.status || 'new', tries = q.tries || 0;
   const sending = s === 'sending' || s === 'new';
-  const slow = s === 'sending' && Date.now() - (q.sentAt || 0) > 12000;
+  const waited = s === 'sending' ? Date.now() - (q.sentAt || 0) : 0, slow = waited > 12000, verySlow = waited > 25000;
   let ico = '<div class="spin"></div>', cls = '', msg = '';
-  if (sending) msg = slow ? 'Распознаю… ещё пара секунд' : 'Отправляю…';
-  else if (s === 'busy') msg = 'Сервер ещё обрабатывает — дождусь ответа';
+  if (sending) msg = verySlow ? 'ИИ сейчас отвечает медленно. Запись сохранена и дойдёт сама — не записывайте её заново' : slow ? 'Распознаю… ещё пара секунд' : 'Отправляю…';
+  else if (s === 'busy') msg = 'Сервер ещё распознаёт эту запись — дождусь ответа. Не записывайте её заново';
   else if (s === 'auth') { ico = ic('circle-alert'); cls = 'bad'; msg = 'Нет доступа — нажмите на аватар вверху и вставьте код из бота заново. Запись сохранена.'; }
   else { ico = ic(navigator.onLine === false ? 'cloud-off' : 'clock-3'); cls = 'warn'; msg = (q.err ? 'Не получилось (' + esc(q.err) + ')' : 'Нет связи') + ' — запись сохранена на телефоне, отправлю сам' + (tries ? ' · попытка ' + tries : ''); }
   const label = q.kind === 'voice' ? 'Голосовое · ' + (q.dur || '') + ' с' : q.kind === 'photo' ? 'Фото чека' : (q.text || '');
@@ -1252,7 +1252,7 @@ async function flush(force){
   sending = { cid: q.cid, ctrl, t0: now };
   q.status = 'sending'; q.sentAt = now; q.err = '';
   renderFeed();
-  const slowTick = setTimeout(renderFeed, 12500);
+  const slowTick = setTimeout(renderFeed, 12500), slowTick2 = setTimeout(renderFeed, 25500);
   try {
     const j = await api({ action: 'add', cid: q.cid, kind: q.kind, data: q.data, mime: q.mime, text: q.text, ts: q.ts }, 120000, ctrl);
     if (!queue.includes(q)) { /* отменили, пока ждали ответ */ }
@@ -1271,7 +1271,7 @@ async function flush(force){
     q.next = ctrl.manual ? 0 : Date.now() + BACKOFF[Math.min(q.tries - 1, BACKOFF.length - 1)] * 1000;
   }
   if (ctrl.dropped) { sending = null; renderFeed(); return; }
-  clearTimeout(slowTick);
+  clearTimeout(slowTick); clearTimeout(slowTick2);
   sending = null;
   if (queue.includes(q)) await persist(q);
   renderFeed();
