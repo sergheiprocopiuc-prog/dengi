@@ -1003,7 +1003,7 @@ function srcHtml(src){
   for (const [re, n, l] of SRC) if (re.test(src)) return `<span class="src" title="${l}${/^бот/.test(src) ? ' · Telegram' : ''}" aria-label="${l}${/^бот/.test(src) ? ' через Telegram' : ''}">${ic(n)}</span> `;
   return '';
 }
-const EV = [[/^❌/, 'x', 'отменил(а) запись'], [/^✏️?/, 'pen-line', 'исправил(а)'], [/^📌/, 'pin', 'новое правило'], [/^🗂/, 'folder-plus', 'новая категория'],
+const EV = [[/^🎁 раскрыл/, 'gift', 'раскрыл(а) подарок'], [/^❌/, 'x', 'отменил(а) запись'], [/^✏️?/, 'pen-line', 'исправил(а)'], [/^📌/, 'pin', 'новое правило'], [/^🗂/, 'folder-plus', 'новая категория'],
   [/^⚠️?/, 'triangle-alert', 'вопрос: похоже на дубль'], [/^🗑/, 'trash-2', 'дубль — не записано'], [/^🚫/, 'ban', 'запись отменена голосом'], [/^🧮/, 'scale', 'сверка кошельков']];
 function historyHtml(){
   const m = histMonth || curMonth();
@@ -1057,7 +1057,7 @@ function historyHtml(){
           if (p.gift) h += `<div class="tag" style="margin-top:6px">${ic('eye-off')}${esc(p.gift)}</div>`;
           if (p.orig) h += `<q>${esc(p.orig)}</q>`;
           if (e.src) h += `<div class="it" style="color:var(--text-3)"><span>Источник: ${esc(e.src.replace(/^бот/, 'Telegram').replace(/^приложение/, 'приложение'))}</span></div>`;
-          if (id && !x) h += `<div class="btns"><button class="btn ghost" data-undo="${id}">${ic('undo-2')}Отменить запись</button></div>`;
+          if (id && !x) h += `<div class="btns"><button class="btn ghost" data-undo="${id}">${ic('undo-2')}Отменить запись</button>${p.gift && canReveal(id) ? revealBtn(id) : ''}</div>`;
           h += '</div>';
         }
         return;
@@ -1081,6 +1081,8 @@ function effectiveOps(log){
     else if (/^✏/.test(a)) {
       const m = String(e.d || '').match(/стало: (.*?)(?: · «[^»]*»)?$/), id = num(e.id);
       if (m && id) { const np = parseOp(m[1]); seen.filter(p => p.id === id).forEach(p => { if (np.cat) p.cat = np.cat; p.desc = np.desc || p.desc; if (np.amount) { p.amount = np.amount; p.sign = np.sign; } p.fixed = true; }); }
+    } else if (/^🎁 раскрыл/.test(a)) {
+      const id = num(e.id); seen.filter(p => p.id === id).forEach(p => p.gift = '');
     } else if (/^📌/.test(a)) {
       String(e.d || '').split(' · перенесено')[0].split('; ').forEach(r => {
         const [mt, c] = r.split(' → '); if (!mt || !c) return;
@@ -1100,6 +1102,7 @@ function bindHistory(root){
   root.querySelectorAll('[data-ft]').forEach(b => b.onclick = () => { const t = b.dataset.ft; histFilter = t === 'clear' ? { type: 'all', cat: '', cats: [] } : { type: t, cat: '', cats: [] }; renderPanel(); });
   root.querySelectorAll('[data-key]').forEach(b => b.onclick = () => { const k = b.dataset.key; histOpen.has(k) ? histOpen.delete(k) : histOpen.add(k); renderPanel(); });
   root.querySelectorAll('[data-undo]').forEach(b => b.onclick = e => { e.stopPropagation(); b.disabled = true; undo(Number(b.dataset.undo)); });
+  bindReveal(root);
 }
 
 /* ================= конвертер ================= */
@@ -1152,6 +1155,7 @@ function renderFeed(){
   fresh.forEach(it => h += recentHtml(it));
   box.innerHTML = h;
   box.querySelectorAll('.undo').forEach(b => b.onclick = () => undo(Number(b.dataset.id)));
+  bindReveal(box);
   box.querySelectorAll('[data-pid]').forEach(b => b.onclick = () => answer(b.dataset.pid, b.dataset.k === '1'));
   box.querySelectorAll('[data-retry]').forEach(b => b.onclick = () => { const q = queue.find(x => x.cid === b.dataset.retry); if (q) { q.next = 0; q.status = 'retry'; } flush(true); });
   box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeQueued(b.dataset.del));
@@ -1167,7 +1171,29 @@ function recentHtml(it){
     <div class="tt" style="display:flex;justify-content:space-between;gap:10px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${x ? 'text-decoration:line-through' : ''}">${esc(p.desc || p.cat || 'Записано')}</span><span class="amt ${p.sign < 0 ? 'neg' : p.sign > 0 ? 'pos' : ''}" style="white-space:nowrap">${p.sign < 0 ? '−' : p.sign > 0 ? '+' : ''}${esc(p.amount)}</span></div>
     <div class="m">${p.desc ? esc(p.cat) + ' · ' : ''}${esc(it.who || '')}${it.rec && it.rec !== it.who ? ' (записал(а) ' + esc(it.rec) + ')' : ''} · ${esc(it.date || '')}${it.fix ? ' · исправлено' : ''}${x ? ' · отменено' : ''}</div>
     ${it.gift ? `<span class="tag" style="margin-top:6px">${ic('eye-off')}скрыто от: ${esc(it.gift)}</span>` : ''}
-    ${x ? '' : `<div class="btns"><button class="btn ghost undo" data-id="${it.id}">${ic('undo-2')}Отменить</button></div>`}</div></div>`;
+    ${x ? '' : `<div class="btns"><button class="btn ghost undo" data-id="${it.id}">${ic('undo-2')}Отменить</button>${canReveal(it.id) ? revealBtn(it.id) : ''}</div>`}</div></div>`;
+}
+/* ---------- раскрыть подарок: только даритель, с подтверждением ---------- */
+const canReveal = id => ((state && state.myGifts) || []).indexOf(Number(id)) >= 0;
+const revealBtn = id => `<button class="btn gold" data-reveal="${id}">${ic('gift')}Раскрыть подарок</button>`;
+let revealArmed = 0, revealT;
+function bindReveal(root){
+  root.querySelectorAll('[data-reveal]').forEach(b => b.onclick = async e => {
+    e.stopPropagation();
+    const id = Number(b.dataset.reveal);
+    if (revealArmed !== id) {                 // первое нажатие — переспрашиваем
+      revealArmed = id; b.innerHTML = ic('gift') + 'Точно? Нажмите ещё раз';
+      clearTimeout(revealT); revealT = setTimeout(() => { revealArmed = 0; renderAll(); }, 4000);
+      return;
+    }
+    revealArmed = 0; clearTimeout(revealT); b.disabled = true; b.innerHTML = '<span class="spin" style="width:16px;height:16px"></span>Раскрываю…';
+    try {
+      const j = await api({ action: 'reveal', id }, 40000);
+      if (j.ok) toast('Подарок раскрыт — теперь его видят оба'); else toast(j.error || 'Не получилось');
+      if (j.state) setState(j.state); else renderAll();
+      if (panel === 'h') { delete logByMonth[histMonth || curMonth()]; loadMonthLog(histMonth || curMonth()); }
+    } catch(err){ toast('Нет связи — попробуйте ещё раз'); renderAll(); }
+  });
 }
 function queueHtml(q){
   const s = q.status || 'new', tries = q.tries || 0;
@@ -1446,12 +1472,12 @@ function demoApi(b){
     rates: { USD: 1, EUR: .8961, RUB: 80.6182, MDL: 18.0264, PRB: 16.1 }, ratesAt: '04.11.2026',
     wallets: [{ name: 'Наличные ПМР', cur: 'PRB', bal: 8420, sym: 'р. ПМР' }, { name: 'Карта Клевер', cur: 'PRB', bal: 2150, sym: 'р. ПМР' }, { name: 'Наличные USD', cur: 'USD', bal: 350, sym: '$' }, { name: 'Карта РФ', cur: 'RUB', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', cur: 'MDL', bal: 900, sym: 'лей' }, { name: 'Наличные EUR', cur: 'EUR', bal: 0, sym: '€' }],
     totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 975 }, { cur: 'RUB', sym: '₽', v: 87730 }, { cur: 'MDL', sym: 'лей', v: 19615 }],
-    log: [{ t: '04.11 03:10', k: curMonth() + '-04', who: 'Юлия', a: '🎁 секретная покупка', id: '', d: 'Подробности скрыты — это сюрприз 🤫', src: '', secret: true },
+    log: [{ t: '04.11 07:40', k: curMonth() + '-04', who: 'Сергей', a: '✅ записал(а)', id: '#15', d: '🔴 −450 р. ПМР · Подарки друг другу · цветы · дата 04.11 · «подарок Юле цветы 450» · 🎁 подарок для Юлия (скрыт от получателя)', src: 'приложение · голос' }, { t: '04.11 03:10', k: curMonth() + '-04', who: 'Юлия', a: '🎁 секретная покупка', id: '', d: 'Подробности скрыты — это сюрприз 🤫', src: '', secret: true },
       { t: '04.11 01:20', k: curMonth() + '-04', who: 'Юлия', a: '✅ записал(а)', id: '#14', d: '🔴 −100 р. ПМР · Продукты · Шериф · состав: Хлеб 12 (Продукты), Семечки 18 (Вкусняшки и баловство), Энергетик 25 (Вкусняшки и баловство), Туалетная бумага 45 (Бытовая химия и хозтовары)', src: 'приложение · фото' },
       { t: '04.11 01:22', k: curMonth() + '-04', who: 'Сергей', a: '📌 правило', id: '', d: 'энергетик → Вкусняшки и баловство · перенесено записей: 1', src: '' },
       { t: '03.11 18:40', k: curMonth() + '-03', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '03.11 12:01', k: curMonth() + '-03', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и рестораны · кофе', src: '' }, { t: '03.11 10:05', k: curMonth() + '-03', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Квартира и коммуналка · квартира · дата 03.11 · «за квартиру три пятьсот»', src: 'бот · голос' }, { t: '02.11 09:30', k: curMonth() + '-02', who: 'Сергей', a: '✅ записал(а)', id: '#9', d: '🟢 +25 000 р. ПМР · Работа / клиенты · аванс · дата 02.11', src: 'приложение · текст' }, { t: '02.11 15:12', k: curMonth() + '-02', who: 'Юлия', a: '✅ записал(а)', id: '#8', d: '🔁 $100 → 1 610 р. ПМР · дата 02.11', src: 'приложение · голос' }],
-    recent: [{ id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '03.11 18:40' }], pending: [],
-    lastRec: { date: '02.11', who: 'Юлия', days: 2 },
+    recent: [{ id: 15, line: '🔴 −450 р. ПМР · Подарки друг другу · цветы', who: 'Сергей', rec: 'Сергей', date: '04.11 07:40', gift: 'Юлия' }, { id: 12, line: '🔴 −350 р. ПМР · Продукты · хлеб и молоко', who: 'Юлия', rec: 'Юлия', date: '03.11 18:40' }], pending: [],
+    myGifts: [15], lastRec: { date: '02.11', who: 'Юлия', days: 2 },
     stats: [{ m: curMonth(), cmp: { label: 'к 1–4 октября', total: 12 }, title: 'Ноябрь', spent: 6240, earned: 25000, income: [{ name: 'Работа / клиенты', sum: 21000 }, { name: 'Подарки и помощь', sum: 3000 }, { name: 'Прочий доход', sum: 1000 }], sections: [
       { name: 'Дом и быт', icon: '🏠', color: '#dcaa6a', sum: 3780, d: -3, cats: [{ name: 'Квартира и коммуналка', sum: 3500, items: [['квартира', 3500]] }, { name: 'Бытовая химия и хозтовары', sum: 280, items: [['туалетная бумага', 145], ['мыло', 60], ['губки', 75]] }] },
       { name: 'Еда', icon: '🍽', color: '#e3141f', sum: 1720, d: 18, cats: [{ name: 'Продукты', sum: 940, d: 5, items: [['хлеб', 120], ['молоко', 160], ['мясо', 420], ['овощи', 240]] }, { name: 'Вкусняшки и баловство', sum: 330, d: 64, items: [['энергетик', 150], ['семечки', 90], ['шоколад', 90]] }, { name: 'Кафе и рестораны', sum: 450, items: [['кафе', 450]] }] },
@@ -1467,6 +1493,7 @@ function demoApi(b){
       st.log.unshift({ t: 'сейчас', k: new Date().toISOString().slice(0, 10), who: cfg.who, a: '✅ записал(а)', id: '#' + id, d: l, src: 'приложение · ' + b.kind });
       r({ ok: true, items: [{ id, line: l }], state: st });
     } else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
+    else if (b.action === 'reveal') { st.log.unshift({ t: '04.11 07:45', k: curMonth() + '-04', who: 'Сергей', a: '🎁 раскрыл(а) подарок', id: '#' + b.id, d: '🔴 −450 р. ПМР · Подарки друг другу · цветы — подарок для Юлия', src: '' }); st.myGifts = []; st.recent.forEach(x => { if (x.id === b.id) x.gift = ''; }); r({ ok: true, state: st }); }
     else if (b.action === 'undo') { st.recent.forEach(x => { if (x.id === b.id) x.x = true; }); r({ ok: true, state: st }); }
     else if (b.action === 'reconcile') r({ ok: true, sid: 'demo', mismatches: 1, since: '02.11', emptyDays: ['03.11'], res: b.facts.map((f, i) => ({ wallet: f.wallet, sym: 'р. ПМР', diff: i ? 0 : -340 })), state: st });
     else if (b.action === 'settle') r({ ok: true, items: [{ id: 99, line: '🔴 −340 р. ПМР · Неучтённые траты' }], state: st });
