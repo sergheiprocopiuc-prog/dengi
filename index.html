@@ -412,6 +412,51 @@ body.ny .nyscene{display:block}
 .setup .field{flex:none;width:100%}
 .setup textarea{font-family:var(--font)}
 
+/* ---------- 14 февраля ---------- */
+body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
+body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
+.brand em.love{color:#EF4050;font-style:normal}
+.setup h1 em.love{color:#EF4050}
+body.val .seg,body.val .act,body.val .who,body.val .list,body.val .card,body.val .fi{border-color:var(--rose)}
+body.val .micwrap::before{border-color:rgba(255,130,170,.32)}
+/* индикатор связи: сердечко + комета */
+body.val .net .d{position:relative;width:12px;height:12px;background:none;box-shadow:none;border-radius:0;color:#FF5C7A;display:inline-block;flex:none}
+body.val .net.off .d{color:var(--warn)}
+body.val .net.ok{width:22px;height:22px}
+.net .vh{position:absolute;inset:0;width:12px;height:12px;filter:drop-shadow(0 0 4px rgba(255,92,122,.55));animation:vbeat 1.6s ease-in-out infinite}
+@keyframes vbeat{0%,60%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(.96)}45%{transform:scale(1.1)}}
+.net .orb{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;transform:rotate(-24deg) scaleY(.42);pointer-events:none}
+.net .orb i{position:absolute;inset:0;border-radius:50%;animation:vorbit 2.4s linear infinite;
+  background:conic-gradient(from 0deg,transparent 0 62%,rgba(255,170,195,.0) 62%,rgba(255,170,195,.55) 92%,#fff 99%,transparent 100%);
+  -webkit-mask:radial-gradient(circle,transparent 9.6px,#000 10px,#000 11.6px,transparent 12px);mask:radial-gradient(circle,transparent 9.6px,#000 10px,#000 11.6px,transparent 12px)}
+@keyframes vorbit{to{transform:rotate(360deg)}}
+/* купидоны над кнопками */
+.cupid{position:absolute;bottom:0;width:clamp(54px,16vw,74px);color:var(--gold);opacity:.9;pointer-events:none;z-index:0;animation:vfloat 4.6s ease-in-out infinite}
+.cupid svg{display:block;width:100%;height:auto}
+.cupid.l{left:3%}
+.cupid.r{right:3%;animation-delay:-2.3s}
+.cupid.r svg{transform:scaleX(-1)}
+@keyframes vfloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+.stage>.cupid{display:none}body.val .stage>.cupid{display:block}
+/* гирлянда из сердечек */
+.vgarland{position:fixed;left:0;right:0;top:calc(var(--st) + 1px);height:20px;z-index:30;pointer-events:none;display:flex;justify-content:space-around;padding:0 8px}
+.vgarland::before{content:"";position:absolute;left:0;right:0;top:-8px;height:16px;border-bottom:1px solid rgba(255,170,195,.35);border-radius:0 0 50% 50%/0 0 100% 100%}
+.vgarland i{width:9px;height:9px;margin-top:6px;color:var(--c);transform-origin:50% -6px;animation:vswing 3s ease-in-out var(--l) infinite;filter:drop-shadow(0 0 3px var(--c))}
+.vgarland i:nth-child(odd){margin-top:3px;width:7px;height:7px}
+.vgarland i svg{display:block;width:100%;height:100%}
+@keyframes vswing{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.vcanvas{position:absolute;left:0;top:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.net .orb i,.net .vh,.cupid,.vgarland i{animation:none!important}}
+/* кнопка-сердца */
+body.val .mic{background:none;box-shadow:none;border-radius:0}
+body.val .mic::before{display:none}
+body.val .micwrap::before,body.val .micwrap::after,body.val .ring{display:none}
+body.val .mic .vhearts{position:absolute;left:-8%;top:-8%;width:116%;height:116%;overflow:visible;pointer-events:none;z-index:0;
+  filter:drop-shadow(0 16px 22px rgba(216,26,44,.55)) drop-shadow(0 6px 10px rgba(0,0,0,.6));transition:filter 90ms linear}
+body.val .mic>svg:not(.vhearts){position:absolute;left:48.6%;top:26.5%;width:26%;height:26%;z-index:1}
+body.val .rec-on .mic .vhearts{filter:drop-shadow(0 0 calc(10px + var(--lvl,0) * 34px) rgba(255,92,104,.85)) drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+body.val .rec-on .mic{animation:vbeat 1.4s ease-in-out infinite}
+
 </style>
 </head>
 <body>
@@ -549,9 +594,59 @@ document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = ic(el.datase
 document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.dataset.art]);
 
 /* ================= праздничные украшения ================= */
+// Дата всегда по Кишинёву: праздник включается в 00:00 и выключается в 00:00 следующего дня по местному времени
+function chisinauDay(at){
+  try {
+    const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Chisinau', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(at || new Date());
+    const g = t => Number((p.find(x => x.type === t) || {}).value);
+    return { y: g('year'), m: g('month'), d: g('day') };
+  } catch(e){ const d = at || new Date(); return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() }; }
+}
+function seasonFor(at){
+  const { m, d } = chisinauDay(at);
+  if ((m === 11 && d >= 15) || m === 12 || (m === 1 && d <= 15)) return 'ny';
+  if (m === 2 && d === 14) return 'val';                       // День святого Валентина — только 14 февраля
+  return '';
+}
+const SEASON = FORCE_SEASON || seasonFor();
+// Наступила полночь по Кишинёву и праздник сменился — перезапускаемся (но не во время записи голоса)
+setInterval(() => { if (!FORCE_SEASON && seasonFor() !== SEASON && !(typeof rec !== 'undefined' && rec)) location.reload(); }, 30000);
+
+// Сердечко + «комета» вокруг него — индикатор связи на 14 февраля
+const VAL_DOT = `<svg class="vh" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><i class="orb"><i></i></i>`;
+// Кнопка 14 февраля: сама кнопка — два красных сердца одно за другим, пронзённые одной стрелой; микрофон — поверх всего, на правом (переднем) сердце
+const VAL_BTN = `<svg class="vhearts" viewBox="0 0 100 100" aria-hidden="true">
+  <defs>
+    <radialGradient id="vg1" cx="34%" cy="30%" r="80%"><stop offset="0" stop-color="#FF6A75"/><stop offset=".32" stop-color="#E8293B"/><stop offset=".62" stop-color="#D81A2C"/><stop offset="1" stop-color="#8E0B17"/></radialGradient>
+    <radialGradient id="vg2" cx="34%" cy="30%" r="80%"><stop offset="0" stop-color="#E8414F"/><stop offset=".4" stop-color="#C3172A"/><stop offset="1" stop-color="#6E0812"/></radialGradient>
+  </defs>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 80.5 94.4 14.2" stroke="#3A0A10" stroke-width="5.2"/>
+    <path d="M6 80.5 94.4 14.2" stroke="#F3DDB5" stroke-width="2.8"/>
+    <path d="M104 7 97.4 18.2 91.4 10.2Z" fill="#F3DDB5" stroke="#3A0A10" stroke-width="1.6"/>
+    <path d="M14 74.5 11.2 84.1M14 74.5 4 74.5M9.2 78.1 6.4 87.7M9.2 78.1-.8 78.1" stroke="#3A0A10" stroke-width="5"/>
+    <path d="M14 74.5 11.2 84.1M14 74.5 4 74.5M9.2 78.1 6.4 87.7M9.2 78.1-.8 78.1" stroke="#F3DDB5" stroke-width="2.6"/>
+  </g>
+  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" transform="translate(1.2 23.2) scale(2.9)" fill="url(#vg2)"/>
+  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" transform="translate(20.4 .4) scale(3.3)" fill="url(#vg1)"/>
+  <ellipse cx="42" cy="24" rx="8.5" ry="5.2" transform="rotate(-32 42 24)" fill="rgba(255,255,255,.22)"/>
+</svg>`;
+// Купидон с луком (контур, как иконки Lucide); смотрит вправо
+const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M22 27c-5-9-15-11-19-6 4-.4 7 1.4 9 4-4-.8-7 .2-9 3 5-.3 9 .6 12 2.6-3 .3-5 2-6 4 5-.6 10-2 14-5"/>
+  <path d="M15 24.5c2 .4 4 1.4 5.5 3"/>
+  <circle cx="31" cy="17" r="7"/><path d="M26 12.4c2-2.8 7-3.6 10-.6"/><path d="M31.5 10.2c.6-1.8 2.8-2.2 3.8-.4"/>
+  <circle cx="34" cy="16.6" r=".7" fill="currentColor"/><path d="M33.6 20c.8.5 1.8.5 2.4 0"/>
+  <path d="M27 24.5c-4.4 3-5.6 10-2.6 14.6 3 4.2 10 4.2 13-.2 2.2-3.8 2-9.6-1.2-13.6"/>
+  <path d="M25.6 31.4c4 2.2 8.6 2 12-.8"/>
+  <path d="M26 39c-2.4 3-5.4 4-8.6 3"/><path d="M34.6 40c2 3 2.2 6 .2 8.4"/>
+  <path d="M36 27.4l7.6-1.4"/>
+  <path d="M47 11.4c7.4 6.6 7.4 22.4 0 29.2"/><path d="M47 11.4 39 26l8 14.6"/>
+  <path d="M31 26h29"/><path d="M56.4 23.2 60 26l-3.6 2.8"/><path d="M32 24l-3 2 3 2M35 24l-3 2 3 2"/>
+</svg>`;
+
 (function decorate(){
-  const d = new Date(), m = d.getMonth() + 1, day = d.getDate();
-  const s = FORCE_SEASON || ((m === 11 && day >= 15) || m === 12 || (m === 1 && day <= 15) ? 'ny' : (m === 2 && day === 14) ? 'val' : '');
+  const s = SEASON;
   const fx = $('fx'), r = (a, b) => a + Math.random() * (b - a);
   if (s === 'ny') {
     document.body.classList.add('ny');
@@ -568,14 +663,73 @@ document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.data
     let b = ''; for (let i = 0; i < 18; i++) b += `<i class="bulb" style="--c:${cols[i % cols.length]};--l:-${(i * .37 % 1.8).toFixed(2)}s"></i>`;
     g.innerHTML = b; document.body.appendChild(g);
   } else if (s === 'val') {
-    $('sIcon').innerHTML = ic('heart');
-    const cols = ['#EF4050', '#FF7A9A', '#D81A2C', '#E8C58E'];
-    const HEART = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
-    let h = '';
-    for (let i = 0; i < 16; i++) h += `<i class="heart" style="--x:${r(0, 95).toFixed(1)}%;--s:${r(14, 30).toFixed(0)}px;--c:${cols[i % 4]};--d:${r(7, 13).toFixed(1)}s;--l:-${r(0, 13).toFixed(1)}s;--w:${r(-40, 40).toFixed(0)}px">${HEART}</i>`;
-    fx.innerHTML = h;
+    document.body.classList.add('val');
+    $('sIcon').innerHTML = '';
+    // «Деньги на любовь»
+    document.querySelectorAll('.brand b, .setup h1').forEach(el => el.innerHTML = 'Деньги <em class="love">на любовь</em>');
+    document.title = 'Деньги на любовь';
+    // кнопка: два сердца, пронзённые стрелой; микрофон остаётся в центре переднего сердца
+    $('mic').insertAdjacentHTML('afterbegin', VAL_BTN);
+    // купидоны слева и справа над кнопками «Чек» и «Текст»
+    const st = $('stage');
+    ['l', 'r'].forEach(k => { const c = document.createElement('i'); c.className = 'cupid ' + k; c.setAttribute('aria-hidden', 'true'); c.innerHTML = CUPID; st.appendChild(c); });
+    // гирлянда из сердечек вверху
+    const g = document.createElement('div'); g.className = 'vgarland'; g.setAttribute('aria-hidden', 'true');
+    const gc = ['#FF8FB1', '#FFE3EA', '#EF4050', '#B0284F'];
+    let b = ''; for (let i = 0; i < 16; i++) b += `<i style="--c:${gc[i % 4]};--l:-${(i * .41 % 3).toFixed(2)}s"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></i>`;
+    g.innerHTML = b; document.body.appendChild(g);
+    valHearts(fx);
   }
 })();
+
+// Сердечки летят снизу вверх; часть движется хаотично и оставляет бледный шлейф своего цвета
+function valHearts(fx){
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = document.createElement('canvas'); cv.className = 'vcanvas'; fx.appendChild(cv);
+  const ctx = cv.getContext('2d'); if (!ctx) return;
+  const COLS = [[255, 143, 177], [255, 236, 241], [239, 64, 80], [176, 40, 79]];   // розовый, белый, красный, бордовый
+  let W = 0, H = 0, dpr = 1;
+  const size = () => { dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight + 120; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size(); addEventListener('resize', size);
+  const R = (a, b) => a + Math.random() * (b - a);
+  const N = Math.round(Math.min(26, Math.max(14, W / 18)));
+  const mk = (y) => {
+    const chaos = Math.random() < .32, c = COLS[Math.floor(Math.random() * COLS.length)];
+    return { x: R(0, W), y: y == null ? H + R(10, 60) : y, s: chaos ? R(9, 15) : R(8, 22), v: R(32, 62) * (chaos ? 1.25 : 1), c, a: R(.55, .9),
+      chaos, vx: 0, ph: R(0, 6.28), fq: R(1.1, 2.0), amp: R(14, 38), rot: R(-.3, .3), pb: R(0, 6.28), trail: [] };
+  };
+  const hs = []; for (let i = 0; i < N; i++) hs.push(mk(R(0, H)));
+  const heart = (x, y, s, rot, col, a) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s / 16, s / 16);
+    ctx.beginPath(); ctx.moveTo(0, 6); ctx.bezierCurveTo(-1, 5, -8, 1, -8, -3); ctx.bezierCurveTo(-8, -7, -3, -8, 0, -4.5);
+    ctx.bezierCurveTo(3, -8, 8, -7, 8, -3); ctx.bezierCurveTo(8, 1, 1, 5, 0, 6); ctx.closePath();
+    ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`; ctx.fill(); ctx.restore();
+  };
+  let last = performance.now();
+  const tick = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      ctx.clearRect(0, 0, W, H);
+      hs.forEach((p, i) => {
+        p.y -= p.v * dt;
+        if (p.chaos) {                                    // хаотично: случайные рывки в стороны
+          p.vx += R(-260, 260) * dt; p.vx *= .97; p.vx = Math.max(-90, Math.min(90, p.vx)); p.x += p.vx * dt;
+          p.rot += p.vx * dt * .01;
+          p.trail.push([p.x, p.y]); if (p.trail.length > 26) p.trail.shift();
+          const pale = p.c.map(v => Math.round(v + (255 - v) * .45));
+          p.trail.forEach((t, k) => { const f = k / p.trail.length; ctx.beginPath(); ctx.arc(t[0], t[1] + p.s * .1, Math.max(.6, p.s * .22 * f), 0, 6.283); ctx.fillStyle = `rgba(${pale[0]},${pale[1]},${pale[2]},${(.22 * f * p.a).toFixed(3)})`; ctx.fill(); });
+        } else { p.ph += dt * p.fq; }
+        p.pb += dt * 3.2;
+        const x = p.chaos ? p.x : p.x + Math.sin(p.ph) * p.amp;
+        const fade = Math.min(1, (H - p.y) / 140, (p.y + 40) / 160);
+        heart(x, p.y, p.s * (1 + Math.sin(p.pb) * .07), p.chaos ? p.rot : Math.sin(p.ph + .8) * .38, p.c, Math.max(0, p.a * fade));
+        if (p.y < -40 || p.x < -60 || p.x > W + 60) hs[i] = mk();
+      });
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 
 /* ================= хранилище очереди (IndexedDB — не теряется при закрытии) ================= */
 const IDB = (() => {
@@ -704,12 +858,21 @@ const QUOTES = [
   ['Небольшая сумма, отложенная регулярно, сильнее обещания начать с понедельника.', 'По мотивам Джорджа Клейсона']
 ];
 let qIdx = -1;
+// 14 февраля — свои фразы: о любви, от людей, которые в неё верили
+const VAL_QUOTES = [
+  ['Любить — это не значит смотреть друг на друга, любить — значит вместе смотреть в одном направлении.', 'Антуан де Сент-Экзюпери · «Планета людей»'],
+  ['Высшее счастье жизни — это уверенность, что тебя любят.', 'Виктор Гюго · «Отверженные»'],
+  ['Всё, всё, что я понимаю, я понимаю только потому, что люблю.', 'Лев Толстой · «Война и мир»'],
+  ['Любовь никогда не перестаёт.', 'Апостол Павел · Первое послание к Коринфянам, 13:8'],
+  ['Зрелая любовь говорит: «Я нуждаюсь в тебе, потому что люблю тебя».', 'Эрих Фромм · «Искусство любить»']
+];
 function renderQuote(animate){
-  const last = LS.get('qLast', -1);
-  let i = Math.floor(Math.random() * QUOTES.length);
-  if (i === last || i === qIdx) i = (i + 1) % QUOTES.length;
-  qIdx = i; LS.set('qLast', i);
-  const el = $('quote'), put = () => { el.innerHTML = `<q>${esc(QUOTES[i][0])}</q><small>${esc(QUOTES[i][1])}</small>`; el.classList.remove('fade'); };
+  const val = SEASON === 'val', Q = val ? VAL_QUOTES : QUOTES, key = val ? 'qLastVal' : 'qLast';
+  const last = LS.get(key, -1);
+  let i = Math.floor(Math.random() * Q.length);
+  if (i === last || i === qIdx) i = (i + 1) % Q.length;
+  qIdx = i; LS.set(key, i);
+  const el = $('quote'), put = () => { el.innerHTML = `<q>${esc(Q[i][0])}</q><small>${esc(Q[i][1])}</small>`; el.classList.remove('fade'); };
   if (animate) { el.classList.add('fade'); setTimeout(put, 160); } else put();
 }
 $('quote').onclick = () => renderQuote(true);
@@ -1244,7 +1407,7 @@ function renderNet(){
   const off = navigator.onLine === false, n = queue.length, el = $('net');
   el.className = 'net' + (off ? ' off' : '') + (!off && !n ? ' ok' : '');
   el.title = off ? 'Нет интернета' : 'На связи';
-  el.innerHTML = `<span class="d"></span>${off ? 'Нет сети' : ''}${n ? (off ? ' · ' : '') + 'в очереди ' + n : ''}`;
+  el.innerHTML = `<span class="d">${SEASON === 'val' ? VAL_DOT : ''}</span>${off ? 'Нет сети' : ''}${n ? (off ? ' · ' : '') + 'в очереди ' + n : ''}`;
 }
 function renderAll(){ renderFeed(); renderPanel(); }
 
