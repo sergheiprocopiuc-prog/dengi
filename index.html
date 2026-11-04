@@ -968,6 +968,11 @@ async function loadMonthLog(m){
   try { const j = await api({ action: 'log', month: m }, 25000); if (j && j.log) { logByMonth[m] = j.log; LS.set('logByMonth', logByMonth); if (panel === 'h') renderPanel(); } } catch(e){}
   logLoading = '';
 }
+// Старые названия категорий → новые (как OLD_CAT_MAP на сервере; журнал хранит название на момент записи)
+const OLD_CAT = { 'кафе и доставка': 'Кафе и рестораны', 'транспорт и авто': 'Авто и топливо', 'жильё и коммуналка': 'Квартира и коммуналка',
+  'жилье и коммуналка': 'Квартира и коммуналка', 'ребёнок': 'Детские товары', 'ребенок': 'Детские товары', 'здоровье и аптека': 'Аптека',
+  'дом и быт': 'Бытовая химия и хозтовары', 'развлечения': 'Кино, концерты, отдых', 'подписки и сервисы': 'Подписки' };
+const newCat = c => OLD_CAT[String(c || '').trim().toLowerCase()] || c;
 // Разбор строки журнала сервера в структуру для красивого показа (сам сервер и данные не меняются)
 function parseOp(d){
   let s = String(d || ''), sign = 0, kind = 'op';
@@ -989,7 +994,8 @@ function parseOp(d){
     const w = g.split(' — на '); if (w[1]) { onWho = w[1]; g = w[0]; }
     if (!cat) cat = g; else if (!desc) desc = g; else desc += ' · ' + g;
   });
-  return { kind, sign, amount: amount.replace(/^[−+]/, ''), cat, desc, items, orig, onWho, gift };
+  items.forEach(i => i.c = newCat(i.c));
+  return { kind, sign, amount: amount.replace(/^[−+]/, ''), cat: kind === 'op' ? newCat(cat) : cat, desc, items, orig, onWho, gift };
 }
 const SRC = [[/голос/, 'mic', 'голос'], [/фото/, 'camera', 'чек'], [/текст/, 'keyboard', 'текст'], [/сверка/, 'scale', 'сверка']];
 function srcHtml(src){
