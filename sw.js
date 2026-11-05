@@ -1,6 +1,6 @@
 // Кэш оболочки приложения — чтобы открывалось мгновенно, даже без сети
-const CACHE = 'dengi-v26';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png','./fonts/manrope-cyrillic-wght-normal.woff2','./fonts/manrope-latin-wght-normal.woff2'];
+const CACHE = 'dengi-v27';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png','./logo.png','./fonts/manrope-cyrillic-wght-normal.woff2','./fonts/manrope-latin-wght-normal.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));

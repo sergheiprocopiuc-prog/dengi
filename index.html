@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Деньги">
-<meta name="theme-color" content="#090807">
+<meta name="theme-color" content="#06120D">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Деньги</title>
@@ -26,16 +26,16 @@
 
 :root{
   /* поверхности */
-  --bg:#090807; --s1:#151311; --s2:#1D1A17; --s3:#24201C; --s4:#2D2823;
-  --line:rgba(255,236,210,.07); --line-2:rgba(255,236,210,.12);
+  --bg:#06120D; --s1:#0C1D16; --s2:#11261D; --s3:#173025; --s4:#1E3A2D;
+  --line:rgba(214,255,232,.07); --line-2:rgba(214,255,232,.12);
   /* золото */
-  --gold:#D9AD69; --gold-2:#E8C58E; --gold-ink:#1A1206; --gold-a12:rgba(217,173,105,.12); --gold-a24:rgba(217,173,105,.24);
+  --gold:#E2AE45; --gold-2:#F3CD6E; --gold-ink:#1A1204; --gold-a12:rgba(226,174,69,.12); --gold-a24:rgba(226,174,69,.24);
   /* текст */
-  --text:#F5F1EA; --text-2:#AAA39A; --text-3:#8C857C;
+  --text:#F2F6F1; --text-2:#A2B3A9; --text-3:#83968B;
   /* смысловые */
-  --neg:#EF4050; --neg-a:rgba(239,64,80,.13); --pos:#42C98A; --pos-a:rgba(66,201,138,.13); --warn:#E9B44C;
+  --neg:#EF4050; --neg-a:rgba(239,64,80,.13); --pos:#2FD27A; --pos-a:rgba(47,210,122,.13); --warn:#E9B44C;
   /* фирменная кнопка */
-  --brand:#D81A2C; --brand-hi:#FF5C68; --brand-lo:#8E0B17;
+  --brand:#12A150; --brand-hi:#4CF08C; --brand-lo:#065C2B;
   /* типографика */
   --font:"Manrope",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   --fs-cap:13px; --fs-sm:14px; --fs-body:16px; --fs-lg:17px; --fs-h3:20px; --fs-h2:24px; --fs-h1:28px; --fs-hero:40px;
@@ -64,8 +64,8 @@ svg.lc{width:22px;height:22px;flex:none;display:inline-block;vertical-align:midd
 
 /* ---------- фон ---------- */
 #fx{position:fixed;top:0;left:0;right:0;bottom:calc(-1 * var(--sb));pointer-events:none;z-index:0;overflow:hidden;
-  background:radial-gradient(120% 50% at 50% 104%,rgba(216,26,44,.10),transparent 60%),
-    radial-gradient(70% 34% at 100% -4%,rgba(217,173,105,.06),transparent 60%),var(--bg)}
+  background:radial-gradient(120% 50% at 50% 104%,rgba(18,161,80,.10),transparent 60%),
+    radial-gradient(70% 34% at 100% -4%,rgba(226,174,69,.06),transparent 60%),var(--bg)}
 
 /* ---------- каркас ---------- */
 .app{position:relative;z-index:1;width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
@@ -74,7 +74,7 @@ body.ny .app{min-height:calc(100dvh - var(--st) - 26px)}
 
 /* шапка */
 .hdr{display:flex;align-items:center;gap:12px;min-height:48px}
-.logo{width:38px;height:38px;border-radius:11px;box-shadow:0 4px 14px rgba(0,0,0,.45);flex:none}
+.logo{width:40px;height:40px;border-radius:22%;box-shadow:0 4px 14px rgba(0,0,0,.45);flex:none}
 .brand{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
 .brand b{font-size:19px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
 .brand b em{font-style:normal;color:var(--gold)}
@@ -82,7 +82,7 @@ body.ny .app{min-height:calc(100dvh - var(--st) - 26px)}
 .brand .sIcon svg.lc{width:18px;height:18px;color:var(--neg)}
 .net{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--r-pill);font-size:var(--fs-cap);font-weight:600;color:var(--text-2);background:var(--s1);border:1px solid var(--line)}
 .net.ok{padding:0;width:12px;height:12px;border:0;background:transparent}
-.net .d{width:8px;height:8px;border-radius:50%;background:var(--pos);box-shadow:0 0 0 3px rgba(66,201,138,.15)}
+.net .d{width:8px;height:8px;border-radius:50%;background:var(--pos);box-shadow:0 0 0 3px rgba(47,210,122,.15)}
 .net.off .d{background:var(--warn);box-shadow:0 0 0 3px rgba(233,180,76,.15)}
 .who{width:44px;height:44px;border-radius:50%;background:var(--s1);border:1px solid var(--line-2);font-weight:700;font-size:16px;color:var(--gold);flex:none;transition:background var(--t-fast)}
 .who:active{background:var(--s3)}
@@ -110,16 +110,16 @@ body.ny .app{min-height:calc(100dvh - var(--st) - 26px)}
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:250px;position:relative;padding:12px 0}
 .micwrap{--sz:min(54vw,31vh,232px);position:relative;width:var(--sz);height:var(--sz);flex:none}
 .micwrap::before{content:"";position:absolute;inset:-13px;border-radius:50%;border:1px solid var(--gold-a24);pointer-events:none}
-.micwrap::after{content:"";position:absolute;inset:-13px;border-radius:50%;border:2px solid rgba(255,92,104,.55);opacity:0;pointer-events:none;
+.micwrap::after{content:"";position:absolute;inset:-13px;border-radius:50%;border:2px solid rgba(76,240,140,.55);opacity:0;pointer-events:none;
   transform:scale(calc(1 + var(--lvl,0) * .22));transition:transform 90ms linear,opacity var(--t)}
 .mic{position:relative;width:100%;height:100%;border-radius:50%;z-index:2;touch-action:none;display:grid;place-items:center;
-  background:radial-gradient(circle at 36% 26%,var(--brand-hi) 0%,#E8293B 30%,var(--brand) 58%,var(--brand-lo) 100%);
-  box-shadow:inset 0 2px 1px rgba(255,255,255,.18),inset 0 -14px 28px rgba(60,0,6,.35),0 26px 50px -18px rgba(216,26,44,.75),0 10px 22px -12px rgba(0,0,0,.8);
+  background:radial-gradient(circle at 36% 26%,var(--brand-hi) 0%,#1DBB60 30%,var(--brand) 58%,var(--brand-lo) 100%);
+  box-shadow:inset 0 2px 1px rgba(255,255,255,.18),inset 0 -14px 28px rgba(0,40,18,.35),0 26px 50px -18px rgba(18,161,80,.75),0 10px 22px -12px rgba(0,0,0,.8);
   transition:transform var(--t) var(--ease),filter var(--t) var(--ease),box-shadow var(--t) var(--ease)}
-.mic svg{width:30%;height:30%;color:#fff;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(80,0,8,.35));transition:transform var(--t) var(--ease),opacity var(--t)}
+.mic svg{width:30%;height:30%;color:#fff;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,50,20,.35));transition:transform var(--t) var(--ease),opacity var(--t)}
 .mic .ok-ic{position:absolute;opacity:0;transform:scale(.6)}
 .mic.press{transform:scale(.965);filter:brightness(.93)}
-.mic.rec{transform:scale(1.035);box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -14px 28px rgba(60,0,6,.3),0 0 0 6px rgba(216,26,44,.16),0 30px 60px -16px rgba(216,26,44,.9)}
+.mic.rec{transform:scale(1.035);box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -14px 28px rgba(0,40,18,.3),0 0 0 6px rgba(18,161,80,.16),0 30px 60px -16px rgba(18,161,80,.9)}
 .rec-on .micwrap::after{opacity:1}
 .mic.done svg:not(.ok-ic){opacity:0;transform:scale(.6)}
 .mic.done .ok-ic{opacity:1;transform:none}
@@ -231,8 +231,8 @@ button.row:active,.row.tap:active{background:var(--s2)}
 .blur{filter:blur(6px);user-select:none;-webkit-user-select:none}
 
 /* ---------- кошелёк ---------- */
-.bal{position:relative;overflow:hidden;background:linear-gradient(160deg,#211C16 0%,#161310 58%);border:1px solid var(--gold-a24);border-radius:24px;padding:20px}
-.bal::after{content:"";position:absolute;right:-60px;top:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(217,173,105,.14),transparent 70%);pointer-events:none}
+.bal{position:relative;overflow:hidden;background:linear-gradient(160deg,#0F2A1F 0%,#0A1B14 58%);border:1px solid var(--gold-a24);border-radius:24px;padding:20px}
+.bal::after{content:"";position:absolute;right:-60px;top:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(226,174,69,.14),transparent 70%);pointer-events:none}
 .bal .lb{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);font-weight:600;color:var(--text-2)}
 .bal .lb svg.lc{width:18px;height:18px;color:var(--gold)}
 .bal .big{display:flex;align-items:baseline;gap:8px;margin-top:10px;flex-wrap:wrap}
@@ -293,7 +293,7 @@ button.row:active,.row.tap:active{background:var(--s2)}
 .day:first-child{margin-top:8px}
 .day span{font-weight:500;color:var(--text-3);font-size:var(--fs-cap)}
 .op .t2 .src{display:inline-flex;align-items:center;gap:3px}
-.op.x .a,.op.x .t1{text-decoration:line-through;text-decoration-color:rgba(245,241,234,.4);color:var(--text-3)}
+.op.x .a,.op.x .t1{text-decoration:line-through;text-decoration-color:rgba(242,246,241,.4);color:var(--text-3)}
 .op.secret .tile{background:var(--gold-a12)}
 .ev{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line);font-size:var(--fs-sm);color:var(--text-2);min-height:48px}
 .ev svg.lc{width:16px;height:16px;color:var(--text-3);flex:none}
@@ -318,7 +318,7 @@ button.row:active,.row.tap:active{background:var(--s2)}
 
 /* ---------- кнопка «к записи» в разделах ---------- */
 .fab{position:fixed;left:50%;bottom:calc(var(--sb) + 18px);z-index:20;transform:translateX(-50%);display:inline-flex;align-items:center;gap:10px;height:56px;padding:0 22px 0 8px;border-radius:var(--r-pill);
-  background:rgba(29,26,23,.92);border:1px solid var(--line-2);box-shadow:0 14px 34px -10px rgba(0,0,0,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  background:rgba(17,38,29,.92);border:1px solid var(--line-2);box-shadow:0 14px 34px -10px rgba(0,0,0,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   font-weight:700;font-size:15px;color:var(--text);animation:fabin var(--t-slow) var(--ease) both}
 .fab i{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 28%,var(--brand-hi),var(--brand) 60%,var(--brand-lo));color:#fff}
 .fab i svg.lc{width:20px;height:20px}
@@ -329,7 +329,7 @@ body:not(.in-sec) .fab{display:none}
 
 /* ---------- подключение ---------- */
 .setup{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;max-width:440px;margin:0 auto;width:100%;min-height:calc(100dvh - var(--st) - 10px);padding-bottom:calc(var(--sb) + 20px)}
-.setup .lg{width:72px;height:72px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.setup .lg{width:76px;height:76px;border-radius:22%;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .setup h1{font-size:var(--fs-h1);font-weight:700;letter-spacing:-.03em;margin:8px 0 0}
 .setup h1 em{font-style:normal;color:var(--gold)}
 .setup p{color:var(--text-2);margin:0;font-size:15px}
@@ -437,10 +437,10 @@ body.ny .nyscene{display:block}
 .lbl{display:block;margin:12px 0 6px;font-size:13px;color:var(--text-2);font-weight:600}
 .pignew{padding:18px}.pignew .field{width:100%;flex:none}
 .pigbig{width:64px;height:64px;border-radius:18px;background:var(--s2);display:grid;place-items:center;color:var(--gold)}.pigbig .boxic{width:34px;height:34px}
-.pigcongrats{position:fixed;inset:0;z-index:60;background:rgba(5,4,3,.82);display:grid;place-items:center;padding:20px;animation:fadeIn .3s}
-.pigcongrats .cbox{position:relative;max-width:360px;width:100%;background:var(--s1);border:1px solid var(--gold-a24,rgba(217,173,105,.24));border-radius:24px;padding:24px;text-align:center}
+.pigcongrats{position:fixed;inset:0;z-index:60;background:rgba(3,10,7,.82);display:grid;place-items:center;padding:20px;animation:fadeIn .3s}
+.pigcongrats .cbox{position:relative;max-width:360px;width:100%;background:var(--s1);border:1px solid var(--gold-a24,rgba(226,174,69,.24));border-radius:24px;padding:24px;text-align:center}
 .pigcongrats .pigbig{margin:0 auto 10px;width:76px;height:76px}.pigcongrats h2{margin:6px 0;font-size:24px;color:var(--gold-2)}.pigcongrats p{color:var(--text-2);line-height:1.5}
-.pigcongrats .coins i{position:absolute;top:-30px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE7A8,#D9AD69 55%,#8C6A33);box-shadow:0 0 8px rgba(232,197,142,.5);animation:coinfall var(--d) linear var(--l) infinite}
+.pigcongrats .coins i{position:absolute;top:-30px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE9A6,#E2AE45 55%,#8A6418);box-shadow:0 0 8px rgba(243,205,110,.5);animation:coinfall var(--d) linear var(--l) infinite}
 @keyframes coinfall{to{transform:translateY(110vh) rotate(540deg)}}
 @keyframes fadeIn{from{opacity:0}}
 
@@ -500,7 +500,7 @@ body.val .rec-on .mic{animation:vbeat 1.4s ease-in-out infinite}
 
 <!-- ======= ПОДКЛЮЧЕНИЕ ======= -->
 <div id="setup" class="setup hidden">
-  <img src="apple-touch-icon.png" class="lg" alt="">
+  <img src="logo.png" class="lg" alt="">
   <h1>Деньги <em>на связи</em></h1>
   <p>Вставьте код подключения из Telegram-бота (команда <b>/app</b>) и выберите, кто вы.</p>
   <textarea id="code" placeholder="Код подключения" aria-label="Код подключения"></textarea>
@@ -516,7 +516,7 @@ body.val .rec-on .mic{animation:vbeat 1.4s ease-in-out infinite}
 <!-- ======= ПРИЛОЖЕНИЕ ======= -->
 <div id="main" class="app hidden">
   <header class="hdr">
-    <img src="apple-touch-icon.png" class="logo" alt="">
+    <img src="logo.png" class="logo" alt="">
     <div class="brand"><b>Деньги <em>на связи</em></b><span class="sIcon" id="sIcon"></span></div>
     <span class="net ok" id="net" role="status" aria-live="polite"><span class="d"></span></span>
     <button class="who" id="whoBtn" aria-label="Профиль и подключение">?</button>
@@ -1159,10 +1159,10 @@ const curName = c => CUR_NAME[c] || c;
 // Разделы: иконка Lucide и спокойный цвет-маркер (только как точка/полоса, не заливка)
 const SEC_IC = { 'Еда': 'utensils', 'Дом и быт': 'house', 'Ребёнок': 'baby', 'Здоровье': 'heart-pulse', 'Транспорт': 'car', 'Одежда и обувь': 'shirt',
   'Красота и уход': 'sparkles', 'Развлечения': 'party-popper', 'Подарки': 'gift', 'Документы и услуги': 'file-text', 'Работа': 'briefcase', 'Крупные покупки': 'gem', 'Прочее': 'circle-ellipsis' };
-const SEC_COLOR = { 'Еда': '#D9AD69', 'Дом и быт': '#7FA7C9', 'Ребёнок': '#E39AB0', 'Здоровье': '#4FB3A8', 'Транспорт': '#9C8FE0', 'Одежда и обувь': '#C88A5A',
+const SEC_COLOR = { 'Еда': '#E2AE45', 'Дом и быт': '#7FA7C9', 'Ребёнок': '#E39AB0', 'Здоровье': '#4FB3A8', 'Транспорт': '#9C8FE0', 'Одежда и обувь': '#C88A5A',
   'Красота и уход': '#D79BCB', 'Развлечения': '#6EC3D8', 'Подарки': '#E2876A', 'Документы и услуги': '#A8A196', 'Работа': '#B9A66A', 'Крупные покупки': '#7E9BF0', 'Прочее': '#6F6A64' };
 const EXTRA_COL = ['#8FB9A8', '#C9A27A', '#9AA9C9', '#C7A0B8', '#B5B07A'];
-const INC_COL = ['#42C98A', '#D9AD69', '#7FD0B0', '#E8C58E', '#5FA98A'];
+const INC_COL = ['#42C98A', '#E2AE45', '#7FD0B0', '#F3CD6E', '#5FA98A'];
 const CAT_IC = { 'Продукты': 'shopping-basket', 'Кафе и рестораны': 'coffee', 'Доставка еды': 'bike', 'Алкоголь': 'wine', 'Вкусняшки и баловство': 'candy',
   'Бытовая химия и хозтовары': 'spray-can', 'Квартира и коммуналка': 'house', 'Связь и интернет': 'wifi', 'Ремонт и мебель': 'hammer', 'Детские товары': 'baby',
   'Аптека': 'briefcase-medical', 'Врачи и анализы': 'stethoscope', 'Спорт': 'dumbbell', 'Авто и топливо': 'fuel', 'Такси и транспорт': 'car-taxi-front', 'Одежда и обувь': 'shirt',
@@ -1296,7 +1296,7 @@ function dl(d){
 }
 function donutSvg(parts, total){
   const R = 52, C = 2 * Math.PI * R, gap = parts.length > 1 ? 2.4 : 0;
-  let off = 0, s = `<svg viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="${R}" fill="none" stroke="#24201C" stroke-width="14"/>`;
+  let off = 0, s = `<svg viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="${R}" fill="none" stroke="#173025" stroke-width="14"/>`;
   parts.forEach(x => {
     const len = Math.max(0, x.sum / total * C - gap);
     s += `<circle cx="66" cy="66" r="${R}" fill="none" stroke="${x.color}" stroke-width="14" stroke-linecap="butt" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"/>`;
