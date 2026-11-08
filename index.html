@@ -444,6 +444,19 @@ body.ny .nyscene{display:block}
 @keyframes coinfall{to{transform:translateY(110vh) rotate(540deg)}}
 @keyframes fadeIn{from{opacity:0}}
 
+/* долги */
+.debts{display:flex;flex-direction:column;gap:10px}
+.card.debt{padding:14px 16px}
+.debt .dtop{display:flex;align-items:center;gap:12px}
+.debt .dtop .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.debt .dtop .t1{font-size:var(--fs-lg);font-weight:700}
+.debt .dtop .t2{font-size:var(--fs-sm)}
+.debt .dtop .a{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.debt.owe{border-color:rgba(239,64,80,.22)}
+.debt .dhist{margin:10px 0 0 56px;font-size:13px;line-height:1.6;color:var(--text-3);font-variant-numeric:tabular-nums}
+.debt .btns{margin-top:12px}
+.debt .dform{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -1210,17 +1223,58 @@ function walletHtml(){
   h += '</div>';
   const L = state.lastRec;
   h += `<div class="note">${L ? 'Последняя сверка: ' + esc(L.date) + ' · ' + esc(L.who) + (L.days >= 7 ? ' · пора сверить снова' : '') : 'Раз в неделю сверяйте кошельки — так находятся забытые траты.'}</div>`;
-  if (state.debts && state.debts.length) {
-    h += `<div class="h2"><h2>Долги</h2></div><div class="list">`;
-    state.debts.forEach(d => {
-      const owe = /^🔴/.test(d.line), txt = String(d.line).replace(/^\S+\s/, '');
-      h += `<div class="row"><span class="tile">${ic('hand-coins')}</span><span class="tx"><span class="t1" style="white-space:normal">${esc(txt)}</span><span class="t2 ${owe ? 'neg' : 'pos'}">${owe ? 'Мы должны' : 'Должны нам'}</span></span></div>`;
-    });
-    h += '</div>';
-  }
+  h += debtsHtml();
   return h;
 }
+/* ================= долги ================= */
+let debtOpen = '', debtWallet = '';
+const debtKey = d => d.who + '|' + d.cur;
+const HIST_L = { 'долг_взяли': 'взяли', 'долг_дали': 'дали', 'возврат_отдали': 'вернули', 'возврат_получили': 'вернули нам' };
+function debtsHtml(){
+  const ds = ((state && state.debts) || []).filter(d => d.who);
+  let h = `<div class="h2"><h2>Долги</h2>${ds.length ? `<span class="aside">${ds.length} ${plural(ds.length, 'человек', 'человека', 'человек')}</span>` : ''}</div>`;
+  if (!ds.length) return h + `<div class="list"><div class="row"><span class="tile">${ic('hand-coins')}</span><span class="tx"><span class="t1">Долгов нет</span><span class="t2">Скажите: «заняли у Насти 2000» или «дали Саше в долг 500»</span></span></div></div>`;
+  h += '<div class="debts">';
+  ds.forEach(d => {
+    const owe = d.net < 0, left = Math.abs(d.net), k = debtKey(d), open = debtOpen === k;
+    const hist = (d.hist || []).map(x => `${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}`).join('<br>');
+    h += `<div class="card debt ${owe ? 'owe' : 'lent'}">
+      <div class="dtop"><span class="tile">${ic('hand-coins')}</span>
+        <span class="tx"><span class="t1">${esc(d.who)}</span><span class="t2 ${owe ? 'neg' : 'pos'}">${owe ? 'Мы должны' : 'Должен(на) нам'}</span></span>
+        <span class="rt"><span class="a ${owe ? 'neg' : 'pos'}">${money(left, d.sym)}</span></span></div>
+      ${hist ? `<div class="dhist">${hist}</div>` : ''}`;
+    if (open) {
+      const ws = ((state && state.wallets) || []).filter(w => w.cur === d.cur), cw = debtWallet || d.wallet || (ws[0] && ws[0].name) || '';
+      h += `<div class="dform"><label class="lbl" style="margin-top:0">${owe ? 'Сколько вернули' : 'Сколько вернули нам'}</label>
+        <input class="field" id="dAmt" inputmode="decimal" autocomplete="off" value="${String(left).replace('.', ',')}">
+        <div class="note" style="margin:6px 0 0">Можно вернуть часть — остаток долга останется.</div>
+        ${ws.length > 1 ? `<label class="lbl">${owe ? 'Из кошелька' : 'В кошелёк'}</label><div class="chips">${ws.map(w => `<button class="chip ${w.name === cw ? 'on' : ''}" data-dw="${esc(w.name)}">${esc(w.name)}</button>`).join('')}</div>` : ''}
+        <div class="btns"><button class="btn primary block" id="dGo" data-dk="${esc(k)}">${ic('check')}Записать возврат</button></div></div>`;
+    } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Долг оплачен' : 'Нам вернули'}</button></div>`;
+    h += '</div>';
+  });
+  return h + `</div><div class="note">Голосом тоже можно: «вернули Насте 700» — сумма долга уменьшится сама.</div>`;
+}
+function bindDebts(root){
+  root.querySelectorAll('[data-dpay]').forEach(b => b.onclick = () => { debtOpen = b.dataset.dpay; debtWallet = ''; renderPanel(); const f = $('dAmt'); if (f) { f.focus(); f.select(); } });
+  root.querySelectorAll('[data-dw]').forEach(b => b.onclick = () => { debtWallet = b.dataset.dw; root.querySelectorAll('[data-dw]').forEach(x => x.classList.toggle('on', x === b)); });
+  const go = root.querySelector('#dGo');
+  if (go) go.onclick = async () => {
+    const d = ((state && state.debts) || []).find(x => debtKey(x) === go.dataset.dk); if (!d) return;
+    const amount = $('dAmt').value.trim(), v = parseFloat(amount.replace(/\s/g, '').replace(',', '.'));
+    if (!(v > 0)) return toast('Укажите сумму');
+    if (v > Math.abs(d.net) + 0.005) return toast('Долг — только ' + money(Math.abs(d.net), d.sym));
+    go.disabled = true; go.textContent = 'Записываю…';
+    try {
+      const j = await api({ action: 'debtPay', name: d.who, cur: d.cur, amount, wallet: debtWallet || d.wallet || '' }, 40000);
+      if (j.ok) { toast(v >= Math.abs(d.net) - 0.005 ? 'Долг закрыт' : 'Записал — осталось ' + money(Math.abs(d.net) - v, d.sym)); debtOpen = ''; } else toast(j.error || 'Не получилось');
+      if (j.state) setState(j.state);
+    } catch(e){ toast('Нет связи — попробуйте ещё раз'); }
+    go.disabled = false; renderPanel();
+  };
+}
 function bindWallet(sh){
+  bindDebts(sh);
   const g = sh.querySelector('#goRec'); if (g) g.onclick = () => { recResult = null; openPanel('r'); };
   sh.querySelectorAll('.curs button').forEach(b => b.onclick = () => { balCur = b.dataset.cur; LS.set('balCur', balCur); renderPanel(); });
 }
@@ -2059,7 +2113,7 @@ function demoApi(b){
       { name: 'Ребёнок', icon: '👶', color: '#ff8fb1', sum: 420, d: 'new', cats: [{ name: 'Детские товары', sum: 420, items: [['подгузники', 420]] }] },
       { name: 'Транспорт', icon: '🚗', color: '#6fb6ff', sum: 200, cats: [{ name: 'Авто и топливо', sum: 200, items: [['бензин', 200]] }] },
       { name: 'Здоровье', icon: '💊', color: '#46d08c', sum: 120, cats: [{ name: 'Аптека', sum: 120, items: [['витамины', 120]] }] }] }],
-    debts: [{ line: '🟢 Саша должен нам 500 р. ПМР' }] };
+    debts: [{ line: '🔴 Мы должны Настя 1 300 р. ПМР', who: 'Настя', cur: 'PRB', sym: 'р. ПМР', net: -1300, wallet: 'Наличные ПМР', hist: [{ t: 'долг_взяли', a: 2000, d: '07.11', w: 'Юлия' }, { t: 'возврат_отдали', a: 700, d: '08.11', w: 'Сергей' }] }, { line: '🟢 Саша должен нам 500 р. ПМР', who: 'Саша', cur: 'PRB', sym: 'р. ПМР', net: 500, wallet: 'Наличные ПМР', hist: [{ t: 'долг_дали', a: 500, d: '02.11', w: 'Сергей' }] }] };
   return new Promise(r => setTimeout(() => {
     if (b.action === 'add' && b.kind === 'voice' && /[?&]slowai\b/.test(location.search) && !st.inbox.some(x => x.cid === b.cid)) {
       st.inbox.push({ cid: b.cid, who: cfg.who, kind: 'voice', status: 'ждёт', tries: 1, at: new Date().toTimeString().slice(0, 5), next: 60 });
@@ -2074,6 +2128,7 @@ function demoApi(b){
       r({ ok: true, items: [{ id, line: l }], state: st });
     } else if (b.action === 'confirm') { st.pending = []; if (b.keep) st.recent.unshift({ id: 777, line: '🔴 −3 500 р. ПМР · Жильё и коммуналка · квартира', who: cfg.who, rec: cfg.who, date: 'сейчас' }); r({ ok: true, items: [], state: st }); }
     else if (b.action === 'drop') { st.inbox = st.inbox.filter(x => x.cid !== b.cid); r({ ok: true, state: st }); }
+    else if (b.action === 'debtPay') { const d = st.debts.find(x => x.who === b.name && x.cur === b.cur); const v = Number(String(b.amount || Math.abs(d.net)).replace(',', '.')); if (v > Math.abs(d.net)) return r({ ok: false, error: 'Долг — только ' + Math.abs(d.net) + ' ' + d.sym }); d.net += d.net < 0 ? v : -v; d.hist.push({ t: d.net <= 0 ? 'возврат_отдали' : 'возврат_получили', a: v, d: 'сегодня', w: cfg.who }); if (Math.abs(d.net) < 0.01) st.debts = st.debts.filter(x => x !== d); r({ ok: true, items: [{ id: 98, line: '✅ возврат ' + v }], state: st }); }
     else if (b.action === 'piggyMove') { const P = st.piggy.active, v = Number(String(b.amount).replace(',', '.')) / st.rates[b.cur] * st.rates[P.cur] * (b.dir === 'out' ? -1 : 1);
       P.saved = Math.round(P.saved + v); P.usdTotal += v / st.rates[P.cur]; P.pct = Math.min(100, Math.floor(P.saved / P.goal * 1000) / 10);
       P.recent.unshift({ id: 99, type: b.dir === 'out' ? 'из_копилки' : 'в_копилку', who: cfg.who, amount: Number(b.amount), cur: b.cur, sym: { PRB: 'р. ПМР', USD: '$', EUR: '€', RUB: '₽', MDL: 'лей' }[b.cur], wallet: 'Наличные', date: 'сейчас' });
