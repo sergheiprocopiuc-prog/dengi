@@ -1406,13 +1406,23 @@ function srcHtml(src){
 }
 const EV = [[/^🎁 раскрыл/, 'gift', 'раскрыл(а) подарок'], [/^❌/, 'x', 'отменил(а) запись'], [/^✏️?/, 'pen-line', 'исправил(а)'], [/^📌/, 'pin', 'новое правило'], [/^🗂/, 'folder-plus', 'новая категория'],
   [/^⚠️?/, 'triangle-alert', 'вопрос: похоже на дубль'], [/^🗑/, 'trash-2', 'дубль — не записано'], [/^🚫/, 'ban', 'запись отменена голосом'], [/^🧮/, 'scale', 'сверка кошельков']];
+// Сумма в другой валюте → подпись «≈ … р. ПМР», чтобы было видно, сколько это в рублях ПМР
+function prbEq(p){
+  if (!p || p.kind === 'fx' || p.kind === 'move') return '';
+  const a = String(p.amount || ''), R = getRates();
+  let cur = /^\$/.test(a) ? 'USD' : /^€/.test(a) ? 'EUR' : /₽$/.test(a) ? 'RUB' : /лей$/.test(a) ? 'MDL' : '';
+  if (!cur || !R[cur] || !R.PRB) return '';
+  const n = Number(a.replace(/[^\d,.]/g, '').replace(',', '.'));
+  if (!n) return '';
+  return `<span class="a2">≈ ${fmt(n / R[cur] * R.PRB)} р. ПМР</span>`;
+}
 function historyHtml(){
   const m = histMonth || curMonth();
   let log = logByMonth[m];
   if (!log) log = ((state && state.log) || []).filter(e => (e.k || '').slice(0, 7) === m);
   const st = ((state && state.stats) || []).find(s => s.m === m);
   let h = secHead('История') + monthsHtml(m);
-  if (st) h += `<div class="kpis" style="margin-top:12px"><div class="kpi"><small>Потрачено</small><b class="neg">−${fmt(st.spent)}</b></div><div class="kpi"><small>Заработано</small><b class="pos">+${fmt(st.earned)}</b></div><div class="kpi"><small>Итог</small><b class="${st.earned - st.spent >= 0 ? 'pos' : 'neg'}">${st.earned - st.spent >= 0 ? '+' : '−'}${fmt(Math.abs(st.earned - st.spent))}</b></div></div>`;
+  if (st) h += `<div class="h2" style="margin-top:14px"><h2>Итоги месяца</h2><span class="aside">в рублях ПМР</span></div><div class="kpis" style="margin-top:8px"><div class="kpi"><small>Потрачено</small><b class="neg">−${fmt(st.spent)}</b></div><div class="kpi"><small>Заработано</small><b class="pos">+${fmt(st.earned)}</b></div><div class="kpi"><small>Итог</small><b class="${st.earned - st.spent >= 0 ? 'pos' : 'neg'}">${st.earned - st.spent >= 0 ? '+' : '−'}${fmt(Math.abs(st.earned - st.spent))}</b></div></div>`;
   const F = histFilter;
   h += `<div class="chips" style="margin-top:12px">${[['all', 'Все'], ['exp', 'Расходы'], ['inc', 'Доходы']].map(([k, l]) => `<button class="chip ${F.type === k && !F.cat ? 'on' : ''}" data-ft="${k}">${l}</button>`).join('')}${F.cat ? `<button class="chip on" data-ft="clear">${esc(F.cat)} ${ic('x')}</button>` : ''}</div>`;
   if (!log.length) return h + `<div class="empty">${ic('history')}${logLoading === m ? 'Загружаю…' : 'За этот месяц записей нет'}</div>`;
@@ -1451,7 +1461,7 @@ function historyHtml(){
         const open = histOpen.has(key);
         h += `<${more ? 'button' : 'div'} class="row op tap ${x ? 'x' : ''} ${open ? 'open' : ''}" ${more ? `data-key="${esc(key)}" aria-expanded="${open}"` : ''}><span class="tile">${ic(icn)}</span>
           <span class="tx"><span class="t1">${esc(title)}</span><span class="t2">${srcHtml(e.src)}${sub.join(' · ')}</span></span>
-          <span class="rt">${p.kind === 'fx' || p.kind === 'move' ? '' : `<span class="a ${p.kind === 'piggy' ? 'gold' : p.sign < 0 ? 'neg' : p.sign > 0 ? 'pos' : ''}">${p.sign < 0 ? '−' : p.sign > 0 ? '+' : ''}${esc(p.amount)}</span>`}${x ? '<span class="a2">отменено</span>' : p.fixed ? '<span class="a2">исправлено</span>' : p.gift ? `<span class="a2">${ic('eye-off')} секрет</span>` : p.items.length ? `<span class="a2">${p.items.length} ${plural(p.items.length, 'позиция', 'позиции', 'позиций')}</span>` : ''}</span></${more ? 'button' : 'div'}>`;
+          <span class="rt">${p.kind === 'fx' || p.kind === 'move' ? '' : `<span class="a ${p.kind === 'piggy' ? 'gold' : p.sign < 0 ? 'neg' : p.sign > 0 ? 'pos' : ''}">${p.sign < 0 ? '−' : p.sign > 0 ? '+' : ''}${esc(p.amount)}</span>`}${prbEq(p)}${x ? '<span class="a2">отменено</span>' : p.fixed ? '<span class="a2">исправлено</span>' : p.gift ? `<span class="a2">${ic('eye-off')} секрет</span>` : p.items.length ? `<span class="a2">${p.items.length} ${plural(p.items.length, 'позиция', 'позиции', 'позиций')}</span>` : ''}</span></${more ? 'button' : 'div'}>`;
         if (open) {
           h += '<div class="det">';
           p.items.forEach(i => h += `<div class="it"><span>${esc(i.n)} <span style="color:var(--text-3)">· ${esc(i.c)}</span></span><b>${esc(i.a)}</b></div>`);
@@ -2034,7 +2044,7 @@ function demoApi(b){
     rates: { USD: 1, EUR: .8961, RUB: 80.6182, MDL: 18.0264, PRB: 16.1 }, ratesAt: '04.11.2026',
     wallets: [{ name: 'Наличные ПМР', cur: 'PRB', bal: 8420, sym: 'р. ПМР' }, { name: 'Карта Клевер', cur: 'PRB', bal: 2150, sym: 'р. ПМР' }, { name: 'Наличные USD', cur: 'USD', bal: 350, sym: '$' }, { name: 'Карта РФ', cur: 'RUB', bal: 12400, sym: '₽' }, { name: 'Наличные MDL', cur: 'MDL', bal: 900, sym: 'лей' }, { name: 'Наличные EUR', cur: 'EUR', bal: 0, sym: '€' }],
     totals: [{ cur: 'PRB', sym: 'р. ПМР', v: 17520 }, { cur: 'USD', sym: '$', v: 1088 }, { cur: 'EUR', sym: '€', v: 975 }, { cur: 'RUB', sym: '₽', v: 87730 }, { cur: 'MDL', sym: 'лей', v: 19615 }],
-    log: [{ t: '04.11 07:40', k: curMonth() + '-04', who: 'Сергей', a: '✅ записал(а)', id: '#15', d: '🔴 −450 р. ПМР · Подарки друг другу · цветы · дата 04.11 · «подарок Юле цветы 450» · 🎁 подарок для Юлия (скрыт от получателя)', src: 'приложение · голос' }, { t: '04.11 03:10', k: curMonth() + '-04', who: 'Юлия', a: '🎁 секретная покупка', id: '', d: 'Подробности скрыты — это сюрприз 🤫', src: '', secret: true },
+    log: [{ t: '04.11 14:18', k: curMonth() + '-04', who: 'Сергей', a: '✅ записал(а)', id: '#17', d: '🔴 −18 800 ₽ · Банк и комиссии · Кредит · дата 04.11', src: 'приложение · текст' }, { t: '04.11 14:17', k: curMonth() + '-04', who: 'Сергей', a: '✅ записал(а)', id: '#16', d: '🟢 +18 800 ₽ · Работа / клиенты · Доход от работы · дата 04.11', src: 'приложение · текст' }, { t: '04.11 07:40', k: curMonth() + '-04', who: 'Сергей', a: '✅ записал(а)', id: '#15', d: '🔴 −450 р. ПМР · Подарки друг другу · цветы · дата 04.11 · «подарок Юле цветы 450» · 🎁 подарок для Юлия (скрыт от получателя)', src: 'приложение · голос' }, { t: '04.11 03:10', k: curMonth() + '-04', who: 'Юлия', a: '🎁 секретная покупка', id: '', d: 'Подробности скрыты — это сюрприз 🤫', src: '', secret: true },
       { t: '04.11 01:20', k: curMonth() + '-04', who: 'Юлия', a: '✅ записал(а)', id: '#14', d: '🔴 −100 р. ПМР · Продукты · Шериф · состав: Хлеб 12 (Продукты), Семечки 18 (Вкусняшки и баловство), Энергетик 25 (Вкусняшки и баловство), Туалетная бумага 45 (Бытовая химия и хозтовары)', src: 'приложение · фото' },
       { t: '04.11 01:22', k: curMonth() + '-04', who: 'Сергей', a: '📌 правило', id: '', d: 'энергетик → Вкусняшки и баловство · перенесено записей: 1', src: '' },
       { t: '03.11 18:40', k: curMonth() + '-03', who: 'Юлия', a: '✅ записал(а)', id: '#12', d: '🔴 −350 р. ПМР · Продукты · хлеб и молоко · «хлеб и молоко 350»', src: 'приложение · голос' }, { t: '03.11 12:01', k: curMonth() + '-03', who: 'Сергей', a: '❌ отменил(а)', id: '#10', d: '🔴 −90 р. ПМР · Кафе и рестораны · кофе', src: '' }, { t: '03.11 10:05', k: curMonth() + '-03', who: 'Сергей', a: '✅ записал(а)', id: '#11', d: '🔴 −3 500 р. ПМР · Квартира и коммуналка · квартира · дата 03.11 · «за квартиру три пятьсот»', src: 'бот · голос' }, { t: '02.11 09:30', k: curMonth() + '-02', who: 'Сергей', a: '✅ записал(а)', id: '#9', d: '🟢 +25 000 р. ПМР · Работа / клиенты · аванс · дата 02.11', src: 'приложение · текст' }, { t: '02.11 15:12', k: curMonth() + '-02', who: 'Юлия', a: '✅ записал(а)', id: '#8', d: '🔁 $100 → 1 610 р. ПМР · дата 02.11', src: 'приложение · голос' }],
