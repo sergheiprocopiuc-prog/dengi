@@ -509,6 +509,10 @@ body.modal-on{overflow:hidden}
 .ck.ng.on svg.lc{color:var(--neg)}
 .row.off{opacity:.45}
 
+.cck{display:inline-flex;align-items:center;gap:8px;min-height:36px;margin:-6px 0;color:var(--text);font-weight:600;text-align:left}
+.cck svg.lc{width:20px;height:20px;color:var(--gold);flex:none}
+.sub.off .cck{color:var(--text-3)}.sub.off .cck svg.lc{color:var(--text-3)}.sub.off .l1 b,.sub.off .l2,.sub.off .its{opacity:.45}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -1419,14 +1423,16 @@ function statsHtml(){
   const mi = Number(m.slice(5)) - 1;
   let h = secHead('Аналитика') + monthsHtml(m) + `<div class="toggle" role="tablist"><button data-mode="exp" class="${statMode === 'exp' ? 'on' : ''}">Расходы</button><button data-mode="inc" class="${statMode === 'inc' ? 'on' : ''}">Доходы</button></div>`;
   const inc = statMode === 'inc';
-  const parts = !st ? [] : inc ? (st.income || []).map((c, i) => ({ name: c.name, sum: c.sum, color: INC_COL[i % INC_COL.length] }))
-    : st.sections.map((x, i) => ({ name: x.name, sum: x.sum, color: secColor(x.name, i), d: x.d, cats: x.cats }));
-  const total = parts.reduce((a, x) => a + x.sum, 0);
+  const catOn = n => !statOff.has('c:' + n);
+  const parts = !st ? [] : inc ? (st.income || []).map((c, i) => ({ name: c.name, sum: c.sum, full: c.sum, items: c.items || [], color: INC_COL[i % INC_COL.length] }))
+    : st.sections.map((x, i) => ({ name: x.name, full: x.sum, sum: x.cats.reduce((a, c) => a + (catOn(c.name) ? c.sum : 0), 0), color: secColor(x.name, i), d: x.d, cats: x.cats }));
+  const total = parts.reduce((a, x) => a + x.full, 0);
   const K = n => (inc ? 'i:' : 'e:') + n, isOn = n => !statOff.has(K(n));
-  const onParts = parts.filter(x => isOn(x.name)), sumOn = onParts.reduce((a, x) => a + x.sum, 0);
+  const onParts = parts.filter(x => isOn(x.name) && x.sum > 0), sumOn = onParts.reduce((a, x) => a + x.sum, 0);
   if (!st || !total) return h + `<div class="empty" style="margin-top:12px">${ic(inc ? 'coins' : 'chart-pie')}${inc ? 'Доходов' : 'Расходов'} в ${MONTHS_P[mi]} пока нет</div>`;
   const work = st.work || 0, workOn = work > 0 && isOn('#work'), shown = inc ? sumOn - (workOn ? work : 0) : sumOn;
-  const offN = parts.length - onParts.length + (work && inc && !workOn ? 1 : 0), allOn = offN === 0;
+  const offCats = inc ? 0 : parts.reduce((a, x) => a + x.cats.filter(c => !catOn(c.name)).length, 0);
+  const offN = parts.filter(x => !isOn(x.name)).length + offCats + (work && inc && !workOn ? 1 : 0), allOn = offN === 0;
   h += `<div class="sum"><div><div class="lb">${inc ? (workOn ? 'Поступило минус расходы на работу' : 'Поступило') : 'Потрачено'} в ${MONTHS_P[mi]}${allOn ? '' : ' · выбрано'}</div><b class="${inc ? (shown >= 0 ? 'pos' : 'neg') : 'neg'}">${inc ? (shown >= 0 ? '+' : '−') : '−'}${fmt(Math.abs(shown))}<small>р. ПМР</small></b></div>
     <div class="cmp">${!allOn ? '' : !inc && st.cmp && st.cmp.total != null ? dl(st.cmp.total) + '<br>' + esc(st.cmp.label) : !inc && !st.cmp ? 'Сравнение появится<br>со второго месяца' : ''}</div></div>`;
   if (inc && workOn) h += `<div class="grossline"><span>Всего поступило</span><b class="pos">+${fmt(sumOn)}</b><span>минус на работу</span><b class="neg">−${fmt(work)}</b></div>`;
@@ -1434,6 +1440,7 @@ function statsHtml(){
   const ck = (key, name, on, neg) => `<button class="ck ${on ? 'on' : ''} ${neg ? 'ng' : ''}" data-ck="${esc(key)}" aria-pressed="${on}">${ic(on ? 'square-check' : 'square')}<span>${esc(name)}</span></button>`;
   h += `<div class="cks" role="group" aria-label="Что учитывать">${parts.map(x => ck(K(x.name), x.name, isOn(x.name))).join('')}${inc && work ? ck(K('#work'), 'Расходы на работу', workOn, true) : ''}</div>`;
   if (!allOn) h += `<button class="link" data-ckall="1" style="margin-top:2px">Вернуть все галочки</button>`;
+  if (!inc) h += `<div class="note" style="margin:4px 0 0">Откройте раздел — внутри можно снять галочку с отдельной категории, например «Алкоголь» или «Кафе и рестораны».</div>`;
   if (inc && (work || st.workIncome)) {
     const net = st.myNet != null ? st.myNet : (st.workIncome || 0) - work, o = openSec.has('#work');
     h += `<div class="card netcard"><div class="lb">${ic('briefcase')}Мой чистый заработок</div>
@@ -1450,17 +1457,23 @@ function statsHtml(){
   h += `<div class="h2"><h2>${inc ? 'Источники' : 'По разделам'}</h2><span class="aside">${parts.length}</span></div><div class="list">`;
   const max = Math.max(...parts.map(x => x.sum));
   parts.forEach(x => {
-    const o = !inc && openSec.has(x.name);
+    const sk = inc ? 'inc:' + x.name : x.name, o = openSec.has(sk);
     const icn = inc ? catIc(x.name) : (SEC_IC[x.name] || 'circle-ellipsis');
     const on = isOn(x.name);
-    h += `<${inc ? 'div' : 'button'} class="row ${o ? 'open' : ''} ${on ? '' : 'off'}" ${inc ? '' : `data-sec="${esc(x.name)}" aria-expanded="${o}"`}><span class="tile">${ic(icn)}<i class="mk" style="background:${x.color}"></i></span>
+    h += `<button class="row ${o ? 'open' : ''} ${on ? '' : 'off'}" data-sec="${esc(sk)}" aria-expanded="${o}"><span class="tile">${ic(icn)}<i class="mk" style="background:${x.color}"></i></span>
       <span class="tx"><span class="t1">${esc(x.name)}</span><span class="bar"><i style="width:${Math.max(3, x.sum / max * 100).toFixed(1)}%;background:${x.color}"></i></span></span>
-      <span class="rt"><span class="a">${fmt(x.sum)}</span><span class="a2">${on ? pctOf(x.sum, sumOn || 1) : 'не учтено'} ${inc || !on ? '' : dl(x.d)}</span></span>${inc ? '' : `<span class="chev">${ic('chevron-right')}</span>`}</${inc ? 'div' : 'button'}>`;
-    if (o) {
+      <span class="rt"><span class="a">${fmt(x.sum)}</span><span class="a2">${on ? pctOf(x.sum, sumOn || 1) + (x.sum < x.full ? ' · из ' + fmt(x.full) : '') : 'не учтено'} ${inc || !on ? '' : dl(x.d)}</span></span><span class="chev">${ic('chevron-right')}</span></button>`;
+    if (o && inc) {
+      h += `<div class="subs">${x.items.length ? `<div class="its" style="margin-top:4px">${x.items.map(i => `<span class="itc st">${esc(i[0])} <b>${fmt(i[1])}</b></span>`).join('')}</div>` : ''}
+        <button class="link" data-cat="${esc(x.name)}" data-inc="1">Все поступления ${ic('chevron-right')}</button>
+        <div class="note" style="margin:2px 0 6px">Чтобы перенести поступление в другую категорию: «Все поступления» → нажмите на запись → «Изменить».</div></div>`;
+    }
+    if (o && !inc) {
       h += `<div class="subs"><button class="link" data-secops="${esc(x.name)}" style="margin:2px 0 6px">Все операции раздела ${ic('chevron-right')}</button>`;
       if (x.name === 'Прочее') h += `<div class="tip" style="margin:0 0 8px">${ic('arrow-right-left')}<span>Здесь то, что не попало в категории. Нажмите на покупку — и выберите, куда её отнести.</span></div>`;
       x.cats.forEach(c => {
-        h += `<div class="sub"><div class="l1"><span>${esc(c.name)}</span><b>${fmt(c.sum)}</b></div><div class="l2"><span>${pctOf(c.sum, x.sum)} раздела</span>${dl(c.d)}</div>` +
+        const con = catOn(c.name);
+        h += `<div class="sub ${con ? '' : 'off'}"><div class="l1"><button class="cck" data-ck="${esc('c:' + c.name)}" aria-pressed="${con}">${ic(con ? 'square-check' : 'square')}<span>${esc(c.name)}</span></button><b>${fmt(c.sum)}</b></div><div class="l2"><span>${pctOf(c.sum, x.sum)} раздела</span>${dl(c.d)}</div>` +
           (c.items && c.items.length ? `<div class="its">${c.items.map(i => movable(c.name, i[0]) ? `<button class="itc" data-mv="${esc(i[0])}" data-from="${esc(c.name)}">${esc(i[0])} <b>${fmt(i[1])}</b>${ic('arrow-right-left')}</button>` : `<span class="itc st">${esc(i[0])} <b>${fmt(i[1])}</b></span>`).join('')}</div>` : '') +
           `<button class="link" data-cat="${esc(c.name)}">Операции ${ic('chevron-right')}</button></div>`;
       });
@@ -1475,12 +1488,12 @@ function bindStats(root){
   bindMonths(root, m => { statMonth = m; renderPanel(); });
   root.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { statMode = b.dataset.mode; renderPanel(); });
   root.querySelectorAll('[data-ck]').forEach(b => b.onclick = () => { const k = b.dataset.ck; statOff.has(k) ? statOff.delete(k) : statOff.add(k); saveOff(); renderPanel(); });
-  root.querySelectorAll('[data-ckall]').forEach(b => b.onclick = () => { [...statOff].filter(k => k.slice(0, 2) === (statMode === 'inc' ? 'i:' : 'e:')).forEach(k => statOff.delete(k)); saveOff(); renderPanel(); });
+  root.querySelectorAll('[data-ckall]').forEach(b => b.onclick = () => { [...statOff].filter(k => statMode === 'inc' ? k.slice(0, 2) === 'i:' : (k.slice(0, 2) === 'e:' || k.slice(0, 2) === 'c:')).forEach(k => statOff.delete(k)); saveOff(); renderPanel(); });
   root.querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { const n = b.dataset.sec; openSec.has(n) ? openSec.delete(n) : openSec.add(n); renderPanel(); });
   root.querySelectorAll('[data-cat]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     histMonth = statMonth || (((state && state.stats) || [])[0] || {}).m || curMonth();
-    histFilter = { type: 'all', cat: b.dataset.cat, cats: [b.dataset.cat] }; openPanel('h');
+    histFilter = { type: b.dataset.inc ? 'inc' : 'all', cat: b.dataset.cat, cats: [b.dataset.cat] }; openPanel('h');
   });
   root.querySelectorAll('[data-mv]').forEach(b => b.onclick = e => { e.stopPropagation(); moveLabel(b.dataset.mv, b.dataset.from); });
   root.querySelectorAll('[data-secops]').forEach(b => b.onclick = e => {
@@ -2307,9 +2320,9 @@ function demoApi(b){
       holdings: [{ cur: 'USD', sym: '$', v: 450 }, { cur: 'PRB', sym: 'р. ПМР', v: 4670 }], usdTotal: 740,
       months: [{ m: '2026-11', put: 210, took: 0, by: [{ who: 'Юлия', v: 120 }, { who: 'Сергей', v: 90 }] }, { m: '2026-10', put: 580, took: 50, by: [{ who: 'Сергей', v: 400 }, { who: 'Юлия', v: 180 }] }],
       recent: [{ id: 30, type: 'в_копилку', who: 'Юлия', amount: 1500, cur: 'PRB', sym: 'р. ПМР', wallet: 'Наличные ПМР', date: '03.11 19:20' }, { id: 29, type: 'в_копилку', who: 'Сергей', amount: 90, cur: 'USD', sym: '$', wallet: 'Наличные USD', date: '01.11 10:05' }, { id: 25, type: 'из_копилки', who: 'Сергей', amount: 50, cur: 'USD', sym: '$', wallet: 'Наличные USD', date: '20.10 14:12' }] } }, lastRec: { date: '02.11', who: 'Юлия', days: 2 },
-    stats: [{ m: curMonth(), cmp: { label: 'к 1–4 октября', total: 12 }, title: 'Ноябрь', spent: 6240, earned: 14700, gross: 25000, work: 10300, workIncome: 21000, myNet: 10700, workCats: [{ name: 'Работа и бизнес', sum: 10300, items: [['зарплата сотруднику', 10000], ['подписка ии', 300]] }], income: [{ name: 'Работа / клиенты', sum: 21000 }, { name: 'Подарки и помощь', sum: 3000 }, { name: 'Прочий доход', sum: 1000 }], sections: [
+    stats: [{ m: curMonth(), cmp: { label: 'к 1–4 октября', total: 12 }, title: 'Ноябрь', spent: 6240, earned: 14700, gross: 25000, work: 10300, workIncome: 21000, myNet: 10700, workCats: [{ name: 'Работа и бизнес', sum: 10300, items: [['зарплата сотруднику', 10000], ['подписка ии', 300]] }], income: [{ name: 'Работа / клиенты', sum: 21000, items: [['оплата от клиента', 15000], ['проект сайта', 6000]] }, { name: 'Подарки и помощь', sum: 3000, items: [['мама', 2000], ['папа', 1000]] }, { name: 'Прочий доход', sum: 1000, items: [['пополнение кошелька', 1000]] }], sections: [
       { name: 'Дом и быт', icon: '🏠', color: '#dcaa6a', sum: 3780, d: -3, cats: [{ name: 'Квартира и коммуналка', sum: 3500, items: [['квартира', 3500]] }, { name: 'Бытовая химия и хозтовары', sum: 280, items: [['туалетная бумага', 145], ['мыло', 60], ['губки', 75]] }] },
-      { name: 'Еда', icon: '🍽', color: '#e3141f', sum: 1720, d: 18, cats: [{ name: 'Базовые продукты', sum: 940, d: 5, items: [['хлеб', 120], ['молоко', 160], ['мясо', 420], ['овощи', 240]] }, { name: 'Вкусняшки и баловство', sum: 330, d: 64, items: [['энергетик', 150], ['семечки', 90], ['шоколад', 90]] }, { name: 'Кафе и рестораны', sum: 450, items: [['кафе', 450]] }] },
+      { name: 'Еда', icon: '🍽', color: '#e3141f', sum: 1840, d: 18, cats: [{ name: 'Базовые продукты', sum: 940, d: 5, items: [['хлеб', 120], ['молоко', 160], ['мясо', 420], ['овощи', 240]] }, { name: 'Алкоголь', sum: 120, items: [['пиво', 120]] }, { name: 'Вкусняшки и баловство', sum: 330, d: 64, items: [['энергетик', 150], ['семечки', 90], ['шоколад', 90]] }, { name: 'Кафе и рестораны', sum: 450, items: [['кафе', 450]] }] },
       { name: 'Ребёнок', icon: '👶', color: '#ff8fb1', sum: 420, d: 'new', cats: [{ name: 'Детские товары', sum: 420, items: [['подгузники', 420]] }] },
       { name: 'Транспорт', icon: '🚗', color: '#6fb6ff', sum: 200, cats: [{ name: 'Авто и топливо', sum: 200, items: [['бензин', 200]] }] },
       { name: 'Здоровье', icon: '💊', color: '#46d08c', sum: 120, cats: [{ name: 'Аптека', sum: 120, items: [['витамины', 120]] }] },
