@@ -513,6 +513,11 @@ body.modal-on{overflow:hidden}
 .cck svg.lc{width:20px;height:20px;color:var(--gold);flex:none}
 .sub.off .cck{color:var(--text-3)}.sub.off .cck svg.lc{color:var(--text-3)}.sub.off .l1 b,.sub.off .l2,.sub.off .its{opacity:.45}
 
+.grossline .gs{display:flex;align-items:center;gap:8px;min-width:0}
+.grossline .gs i{width:8px;height:8px;border-radius:50%;flex:none}
+.grossline .gs small{color:var(--muted);font-size:13px;margin-left:2px}
+.grossline .gt{padding-top:8px;margin-top:2px;border-top:1px solid var(--line);color:var(--text);font-weight:600}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -1436,7 +1441,9 @@ function statsHtml(){
   const offN = parts.filter(x => !isOn(x.name)).length + offCats + (work && inc && !workOn ? 1 : 0), allOn = offN === 0;
   h += `<div class="sum"><div><div class="lb">${inc ? (workOn ? 'Поступило минус расходы на работу' : 'Поступило') : 'Потрачено'} в ${MONTHS_P[mi]}${allOn ? '' : ' · выбрано'}</div><b class="${inc ? (shown >= 0 ? 'pos' : 'neg') : 'neg'}">${inc ? (shown >= 0 ? '+' : '−') : '−'}${fmt(Math.abs(shown))}<small>р. ПМР</small></b></div>
     <div class="cmp">${!allOn ? '' : !inc && st.cmp && st.cmp.total != null ? dl(st.cmp.total) + '<br>' + esc(st.cmp.label) : !inc && !st.cmp ? 'Сравнение появится<br>со второго месяца' : ''}</div></div>`;
-  if (inc && workOn) h += `<div class="grossline"><span>Всего поступило</span><b class="pos">+${fmt(sumOn)}</b><span>минус на работу</span><b class="neg">−${fmt(work)}</b></div>`;
+  // Разбивка поступлений: каждый источник, затем расходы на работу и итог
+  if (inc) h += `<div class="grossline">${parts.filter(x => x.sum > 0).map(x => `<span class="gs"><i style="background:${x.color}"></i>${esc(x.name)}<small>${pctOf(x.sum, sumOn)}</small></span><b class="pos">+${fmt(x.sum)}</b>`).join('')}` +
+    (workOn ? `<span class="gt">Всего поступило</span><b class="pos gt">+${fmt(sumOn)}</b><span>Минус расходы на работу</span><b class="neg">−${fmt(work)}</b><span class="gt">Осталось</span><b class="${shown >= 0 ? 'pos' : 'neg'} gt">${shown >= 0 ? '+' : '−'}${fmt(Math.abs(shown))}</b>` : '') + '</div>';
   if (inc && (work || st.workIncome)) {
     const net = st.myNet != null ? st.myNet : (st.workIncome || 0) - work, o = openSec.has('#work');
     h += `<div class="card netcard"><div class="lb">${ic('briefcase')}Мой чистый заработок</div>
