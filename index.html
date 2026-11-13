@@ -572,6 +572,22 @@ body.modal-on{overflow:hidden}
 .fxf b{color:var(--text);font-weight:700}
 .fxe{display:flex;align-items:center;gap:10px;margin-top:14px;padding:18px 0 6px;color:var(--text-2);font-size:15px}
 
+/* ---------- поиск: итог по найденному ---------- */
+.hst{margin-top:12px}
+.hsl{display:flex;align-items:center;gap:10px;margin:14px 2px 4px;color:var(--text-2);font-size:14px}
+.hsum{margin-top:12px;padding:16px;border-radius:20px;background:linear-gradient(160deg,#10271D 0%,var(--s1) 60%);border:1px solid var(--gold-a24)}
+.hsum .hq{font-size:14px;font-weight:600;color:var(--text-2)}
+.hbig{display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap}
+.hbig b{font-size:32px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.hbig span{font-size:15px;font-weight:600;color:var(--text-2)}
+.hbig.sm b{font-size:22px}
+.hmeta{margin-top:8px;font-size:13.5px;color:var(--text-2);line-height:1.45}
+.hmon{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.hmon div{display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:10px;font-size:13px;color:var(--text-2)}
+.hmon i{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
+.hmon i b{display:block;height:100%;border-radius:3px;background:var(--gold)}
+.hmon em{font-style:normal;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -1163,7 +1179,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '41';
+const APP_V = '42';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1642,6 +1658,12 @@ function historyHtml(){
 function histListHtml(){
   const m = histMonth || curMonth(), log = monthLog(m), F = histFilter, q = histQuery.trim().toLowerCase(), qn = q.replace(/[\s−+]/g, '').replace('.', ',');
   let h = '';
+  if (q.length >= 2) {
+    const key = q + '|' + hsPeriod(), r = hsRes && hsRes.key === key ? hsRes : null;
+    h = hsChips();
+    if (r && !r.error) return h + hsHtml(r);
+    h += r && r.error ? `<div class="tip" style="margin-top:10px">${ic('wifi-off')}<span>${esc(r.error)}</span></div>` : `<div class="hsl"><span class="spin"></span>Ищу во всех записях и чеках…</div>`;
+  }
   if (!log.length) return `<div class="empty">${ic('history')}${logLoading === m ? 'Загружаю…' : 'За этот месяц записей нет'}</div>`;
   const cancelled = new Set(((state && state.cancelled) || []).map(Number));
   log.forEach(e => { if (/^❌/.test(e.a) && e.id) cancelled.add(Number(String(e.id).replace('#', ''))); });
@@ -1744,14 +1766,63 @@ function bindHistory(root){
   bindMonths(root, m => { histMonth = m; renderPanel(); loadMonthLog(m); });
   root.querySelectorAll('[data-ft]').forEach(b => b.onclick = () => { const t = b.dataset.ft; histFilter = t === 'clear' ? { type: 'all', cat: '', cats: [] } : { type: t, cat: '', cats: [] }; renderPanel(); });
   const hq = root.querySelector('#hq');
-  if (hq) hq.addEventListener('input', () => { histQuery = hq.value; const l = $('hlist'); if (l) { l.innerHTML = histListHtml(); bindHistList(l); } });
+  if (hq) hq.addEventListener('input', () => { histQuery = hq.value; redrawHist(); runSearch(); });
+  if (histQuery.trim().length >= 2) { const key = histQuery.trim().toLowerCase() + '|' + hsPeriod(); if (!(hsRes && hsRes.key === key) && hsBusy !== key) runSearch(); }
   bindHistList(root);
 }
 function bindHistList(root){
+  root.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { hsPer = b.dataset.sp; LS.set('hsPer', hsPer); redrawHist(); runSearch(); });
   root.querySelectorAll('[data-key]').forEach(b => b.onclick = () => { const k = b.dataset.key; histOpen.has(k) ? histOpen.delete(k) : histOpen.add(k); renderPanel(); });
   root.querySelectorAll('[data-undo]').forEach(b => b.onclick = e => { e.stopPropagation(); askUndo(Number(b.dataset.undo), String(b.dataset.line || '').replace(/^\S+\s(?=[−+$€\d])/, '')); });
   root.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { e.stopPropagation(); openEdit(Number(b.dataset.edit)); });
   bindReveal(root);
+}
+
+/* ---------- поиск по записям и позициям чеков за выбранный месяц или год (на сервере) ---------- */
+let hsRes = null, hsPer = LS.get('hsPer', 'm'), hsT = null, hsBusy = '';
+const hsPeriod = () => { const m = histMonth || curMonth(); return hsPer === 'y' ? m.slice(0, 4) : m; };
+function redrawHist(){ const l = $('hlist'); if (l) { l.innerHTML = histListHtml(); bindHistList(l); } }
+function runSearch(){
+  clearTimeout(hsT);
+  const q = histQuery.trim().toLowerCase(); if (q.length < 2) return;
+  hsT = setTimeout(async () => {
+    const per = hsPeriod(), key = q + '|' + per; hsBusy = key;
+    try { const j = await api({ action: 'search', q, period: per }, 30000); if (hsBusy === key) hsRes = Object.assign(j && j.ok ? j : { error: (j && j.error) || 'Не получилось найти' }, { key }); }
+    catch(e){ if (hsBusy === key) hsRes = { key, error: 'Нет связи — показываю только записи загруженного месяца' }; }
+    if (hsBusy === key) { hsBusy = ''; if (panel === 'h') redrawHist(); }
+  }, 350);
+}
+function hsChips(){
+  const m = histMonth || curMonth();
+  return `<div class="toggle hst" role="group" aria-label="Где искать"><button data-sp="m" class="${hsPer !== 'y' ? 'on' : ''}">За ${MONTHS[Number(m.slice(5)) - 1].toLowerCase()}</button><button data-sp="y" class="${hsPer === 'y' ? 'on' : ''}">За ${m.slice(0, 4)} год</button></div>`;
+}
+function hsHtml(r){
+  const m = histMonth || curMonth(), perL = hsPer === 'y' ? 'в ' + m.slice(0, 4) + ' году' : 'в ' + MONTHS_P[Number(m.slice(5)) - 1];
+  if (!r.count) return `<div class="empty">${ic('search')}Ничего не найдено ${perL}<br><span style="font-size:14px;color:var(--text-3)">Попробуйте другое слово или выберите год</span></div>`;
+  const inCheck = r.hits.filter(x => x.store).length;
+  let h = `<div class="hsum"><div class="hq">«${esc(histQuery.trim())}» ${perL}</div>`;
+  if (r.cExp) h += `<div class="hbig"><b class="neg">−${fmt(r.total)}</b><span>${esc(r.sym || 'р. ПМР')} потрачено</span></div>`;
+  if (r.cInc) h += `<div class="hbig sm"><b class="pos">+${fmt(r.totalInc)}</b><span>${esc(r.sym || 'р. ПМР')} поступило</span></div>`;
+  h += `<div class="hmeta">${r.count} ${plural(r.count, 'запись', 'записи', 'записей')}${inCheck ? ` · ${inCheck} — в составе чеков` : ''}${r.cExp > 1 ? ` · в среднем ${fmt(r.total / r.cExp)} за раз` : ''}</div>`;
+  if (hsPer === 'y' && r.months && r.months.length > 1) {
+    const mx = Math.max(...r.months.map(x => x[1])) || 1;
+    h += `<div class="hmon">${r.months.map(([k, v]) => `<div><span>${MONTHS[Number(k.slice(5)) - 1]}</span><i><b style="width:${Math.max(3, v / mx * 100).toFixed(1)}%"></b></i><em>${fmt(v)}</em></div>`).join('')}</div>`;
+  }
+  h += '</div>';
+  let cur = '';
+  r.hits.forEach(x => {
+    if (x.date !== cur) {
+      if (cur) h += '</div>';
+      cur = x.date; const dt = new Date(x.date + 'T12:00'), n = r.hits.filter(y => y.date === x.date).length;
+      h += `<div class="day">${dt.getDate()} ${MONTHS_G[dt.getMonth()]}${hsPer === 'y' ? '' : ', ' + WD[dt.getDay()]}<span>${n} ${plural(n, 'запись', 'записи', 'записей')}</span></div><div class="list">`;
+    }
+    const sgn = x.type === 'расход' ? '−' : '+', other = x.cur !== 'PRB';
+    h += `<div class="row op"><span class="tile">${ic(catIc(x.cat))}</span><span class="tx"><span class="t1">${esc(x.name)}</span><span class="t2">${x.store ? 'в чеке «' + esc(x.store) + '» · ' : esc(x.cat || '') + ' · '}${esc(x.who || '')}</span></span>
+      <span class="rt"><span class="a ${x.type === 'расход' ? 'neg' : 'pos'}">${sgn}${esc(money(x.amount, x.sym))}</span>${other ? `<span class="a2">≈ ${fmt(x.main)} р. ПМР</span>` : ''}</span></div>`;
+  });
+  if (cur) h += '</div>';
+  if (r.more) h += `<div class="note">Показаны последние 200 записей; итог посчитан по всем ${r.count}.</div>`;
+  return h;
 }
 
 /* ================= конвертер ================= */
@@ -2584,6 +2655,7 @@ function demoApi(b){
     else if (b.action === 'reconcile') r({ ok: true, sid: 'demo', mismatches: 1, since: '02.11', emptyDays: ['03.11'], res: b.facts.map((f, i) => ({ wallet: f.wallet, sym: 'р. ПМР', diff: i ? 0 : -340 })), state: st });
     else if (b.action === 'settle') r({ ok: true, items: [{ id: 99, line: '🔴 −340 р. ПМР · Неучтённые траты' }], state: st });
     else if (b.action === 'log') r({ ok: true, log: st.log.filter(e => (e.k || '').slice(0, 7) === b.month) });
+    else if (b.action === 'search') { const q = String(b.q || '').toLowerCase(), d = new Date().toISOString().slice(0, 10), hits = [{ id: 13, date: d, d, who: 'Юлия', type: 'расход', cur: 'PRB', sym: 'р. ПМР', name: 'Хлеб', cat: 'Базовые продукты', amount: 12, main: 12, store: 'Шериф' }, { id: 12, date: d, d, who: 'Юлия', type: 'расход', cur: 'PRB', sym: 'р. ПМР', name: 'хлеб и молоко', cat: 'Базовые продукты', amount: 350, main: 350 }].filter(h => h.name.toLowerCase().indexOf(q) >= 0); r({ ok: true, q, sym: 'р. ПМР', total: hits.reduce((a, h) => a + h.main, 0), totalInc: 0, count: hits.length, cExp: hits.length, cInc: 0, months: [[d.slice(0, 7), hits.reduce((a, h) => a + h.main, 0)], ['2026-10', 140]], hits, more: 0 }); }
     else if (b.action === 'usdrub') { const pts = []; let v = 92; for (let i = 365; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5); if (d.getDay() === 0 || d.getDay() === 1) continue; v += Math.sin(i / 23) * .35 + (Math.random() - .52) * .6; pts.push([d.toISOString().slice(0, 10), Math.round(v * 100) / 100]); } r({ ok: true, src: 'ЦБ РФ (демо)', at: 'демо-данные', pts }); }
     else r({ ok: true, state: st });
   }, b.action === 'add' ? 1400 : 150));
