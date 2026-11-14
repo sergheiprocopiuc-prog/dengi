@@ -590,6 +590,7 @@ body.modal-on{overflow:hidden}
 .chips.wrapc{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
 .chip[disabled]{opacity:.45}
 .modal input[type=date].field{display:block;width:100%;-webkit-appearance:none;appearance:none;min-height:56px;color-scheme:dark}
+.card.debt .btns{display:flex;gap:8px;flex-wrap:nowrap}.card.debt .btns .block{flex:1;width:auto;min-width:0}.card.debt [data-dhide]{flex:0 0 auto;padding-left:16px;padding-right:16px}.card.debt [data-dhide] svg{margin:0}
 
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
@@ -1182,7 +1183,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '44';
+const APP_V = '45';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1393,13 +1394,21 @@ function debtsHtml(){
         <div class="note" style="margin:6px 0 0">Можно вернуть часть — остаток долга останется.</div>
         ${ws.length > 1 ? `<label class="lbl">${owe ? 'Из кошелька' : 'В кошелёк'}</label><div class="chips">${ws.map(w => `<button class="chip ${w.name === cw ? 'on' : ''}" data-dw="${esc(w.name)}">${esc(w.name)}</button>`).join('')}</div>` : ''}
         <div class="btns"><button class="btn primary block" id="dGo" data-dk="${esc(k)}">${ic('check')}Записать возврат</button></div></div>`;
-    } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Долг оплачен' : 'Нам вернули'}</button></div>`;
+    } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Долг оплачен' : 'Нам вернули'}</button><button class="btn ghost" data-dhide="${esc(k)}" aria-label="Убрать долг из списка" title="Убрать из списка">${ic('trash-2')}</button></div>`;
     h += '</div>';
   });
   return h + `</div><div class="note">Голосом тоже можно: «вернули Насте 700» — сумма долга уменьшится сама.</div>`;
 }
 function bindDebts(root){
   root.querySelectorAll('[data-dpay]').forEach(b => b.onclick = () => { debtOpen = b.dataset.dpay; debtWallet = ''; renderPanel(); const f = $('dAmt'); if (f) { f.focus(); f.select(); } });
+  root.querySelectorAll('[data-dhide]').forEach(b => b.onclick = async () => {
+    const d = ((state && state.debts) || []).find(x => debtKey(x) === b.dataset.dhide); if (!d) return;
+    if (!confirm('Убрать долг «' + d.who + '» из списка?\n\nДеньги в кошельках не изменятся — долг просто перестанет показываться.')) return;
+    b.disabled = true;
+    try { const j = await api({ action: 'debtHide', name: d.who, cur: d.cur }, 30000); if (j.state) setState(j.state); toast(j.ok ? 'Долг убран из списка' : (j.error || 'Не получилось')); }
+    catch(e){ toast('Нет связи — попробуйте ещё раз'); }
+    renderPanel();
+  });
   root.querySelectorAll('[data-dw]').forEach(b => b.onclick = () => { debtWallet = b.dataset.dw; root.querySelectorAll('[data-dw]').forEach(x => x.classList.toggle('on', x === b)); });
   const go = root.querySelector('#dGo');
   if (go) go.onclick = async () => {
@@ -2699,6 +2708,7 @@ function demoApi(b){
           S.sections.forEach(sec => sec.cats = sec.cats.filter(c => c.sum > 0)); S.sections = S.sections.filter(sec => sec.sum > 0).sort((x, y) => y.sum - x.sum); } });
       st.log.unshift({ t: 'сейчас', k: new Date().toISOString().slice(0, 10), who: cfg.who, a: '📌 правило', id: '', d: b.match + ' → ' + b.category + ' · перенесено записей: ' + moved, src: '' });
       r({ ok: true, reply: '📌', state: st }); }
+    else if (b.action === 'debtHide') { st.debts = st.debts.filter(x => !(x.who === b.name && x.cur === b.cur)); r({ ok: true, state: st }); }
     else if (b.action === 'debtPay') { const d = st.debts.find(x => x.who === b.name && x.cur === b.cur); const v = Number(String(b.amount || Math.abs(d.net)).replace(',', '.')); if (v > Math.abs(d.net)) return r({ ok: false, error: 'Долг — только ' + Math.abs(d.net) + ' ' + d.sym }); d.net += d.net < 0 ? v : -v; d.hist.push({ t: d.net <= 0 ? 'возврат_отдали' : 'возврат_получили', a: v, d: 'сегодня', w: cfg.who }); if (Math.abs(d.net) < 0.01) st.debts = st.debts.filter(x => x !== d); r({ ok: true, items: [{ id: 98, line: '✅ возврат ' + v }], state: st }); }
     else if (b.action === 'piggyMove') { const P = st.piggy.active, v = Number(String(b.amount).replace(',', '.')) / st.rates[b.cur] * st.rates[P.cur] * (b.dir === 'out' ? -1 : 1);
       P.saved = Math.round(P.saved + v); P.usdTotal += v / st.rates[P.cur]; P.pct = Math.min(100, Math.floor(P.saved / P.goal * 1000) / 10);
