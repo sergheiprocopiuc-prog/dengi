@@ -596,13 +596,15 @@ body.modal-on{overflow:hidden}
 body.ny .mic{background:radial-gradient(circle at 36% 30%,#FF6F6A 0%,#E8342F 32%,#C3141C 62%,#7E0710 100%);
   box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -16px 30px rgba(60,0,8,.4),0 26px 50px -18px rgba(214,30,40,.7),0 10px 22px -12px rgba(0,0,0,.8)}
 body.ny .mic.rec{box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -16px 30px rgba(60,0,8,.35),0 0 0 6px rgba(214,30,40,.16),0 30px 60px -16px rgba(214,30,40,.85)}
-body.ny .mic svg.nycoat{position:absolute;left:-15%;top:-15%;width:130%;height:130%;filter:none;z-index:1;opacity:1;transform:none}
-body.ny .mic>svg:not(.nycoat):not(.ok-ic){position:relative;z-index:2;transform:translateY(6%)}
-body.ny .mic.done>svg:not(.nycoat):not(.ok-ic){transform:translateY(6%) scale(.6)}
+body.ny .mic svg.nycoat{position:absolute;left:-30%;top:-62.5%;width:160%;height:180%;filter:none;z-index:1;opacity:1;transform:none}
+body.ny .mic>svg:not(.nycoat):not(.ok-ic){position:relative;z-index:2;transform:translateY(16%)}
+body.ny .mic.done>svg:not(.nycoat):not(.ok-ic){transform:translateY(16%) scale(.6)}
 body.ny .mic .ok-ic{z-index:2}
-body.ny .mic.done .ok-ic{transform:translateY(6%)}
+body.ny .mic.done .ok-ic{transform:translateY(16%)}
 body.ny .ring{border-color:#FF6F6A}
 body.ny .micwrap::after{border-color:rgba(255,111,106,.55)}
+body.ny .micwrap{--sz:min(46vw,26vh,200px);margin-top:12vh}
+body.ny .micwrap::before{display:none}
 
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
@@ -1041,31 +1043,63 @@ const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke
   <path d="M31 26h29"/><path d="M56.4 23.2 60 26l-3.6 2.8"/><path d="M32 24l-3 2 3 2M35 24l-3 2 3 2"/>
 </svg>`;
 
-// Новый год: красная кнопка в накинутой «шубке» — пушистый снежный мех на воротнике сверху, бока чистые
+// Новый год: кнопка — живот Деда Мороза. Голова в шапке сверху, борода ложится на живот, руки в варежках по бокам, валенки снизу
 function nyCoat(){
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const C = 100, R = 100, under = [], top = [], hl = [];
-  const N = 54;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N, a = Math.PI * (1.13 + .74 * t);                // дуга воротника: от левого плеча через верх к правому
-    const mid = 1 - Math.abs(t - .5) * 2, w = 7 + 7 * Math.pow(mid, .7);   // толще всего сверху, к краям тоньше
-    const droop = Math.pow(1 - mid, 3) * 16;                          // концы чуть свисают — накинуто на плечи
-    const rr = R - 1 - w * .15, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr + droop;
-    const nx = Math.cos(a), ny = Math.sin(a);
-    for (let k = 0; k < 3; k++) {
-      const off = (k - 1) * w * .45 + (rnd() - .5) * 3, cr = w * (.5 + rnd() * .28);
-      const px = x + nx * off + (rnd() - .5) * 3, py = y + ny * off + (rnd() - .5) * 3;
-      under.push(`<circle cx="${(px + 1).toFixed(1)}" cy="${(py + 3).toFixed(1)}" r="${(cr * 1.05).toFixed(1)}"/>`);
-      top.push(`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"/>`);
-      if (rnd() < .35) hl.push(`<circle cx="${(px - cr * .3).toFixed(1)}" cy="${(py - cr * .35).toFixed(1)}" r="${(cr * .32).toFixed(1)}"/>`);
-    }
-  }
-  return `<svg class="nycoat" viewBox="-30 -30 260 260" aria-hidden="true">
-    <defs><radialGradient id="nyf" cx="40%" cy="25%" r="85%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F3F8FD"/><stop offset="1" stop-color="#D5E4F1"/></radialGradient></defs>
-    <g fill="rgba(70,0,10,.38)" filter="blur(0)">${under.join('')}</g>
-    <g fill="#C9DAEA">${top.map(c => c.replace(/r="([\d.]+)"/, (m, v) => `r="${(+v + .8).toFixed(1)}"`)).join('')}</g>
-    <g fill="url(#nyf)">${top.join('')}</g>
-    <g fill="rgba(255,255,255,.9)">${hl.join('')}</g>
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // пушистый мех вдоль линии: тень, серый подшёрсток, белый мех, блики
+  const fur = (pts, w0, w1) => {
+    const L = { u: [], m: [], t: [], h: [] };
+    pts.forEach((p, i) => {
+      const t = pts.length > 1 ? i / (pts.length - 1) : 0, w = w0 + (w1 - w0) * t;
+      for (let k = 0; k < 3; k++) {
+        const cr = w * (.5 + rnd() * .28), px = p[0] + (rnd() - .5) * w * .7, py = p[1] + (rnd() - .5) * w * .7;
+        L.u.push(`<circle cx="${(px + 1).toFixed(1)}" cy="${(py + 3).toFixed(1)}" r="${(cr * 1.05).toFixed(1)}"/>`);
+        L.m.push(`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(cr + .8).toFixed(1)}"/>`);
+        L.t.push(`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"/>`);
+        if (rnd() < .3) L.h.push(`<circle cx="${(px - cr * .3).toFixed(1)}" cy="${(py - cr * .35).toFixed(1)}" r="${(cr * .3).toFixed(1)}"/>`);
+      }
+    });
+    return `<g fill="rgba(60,0,10,.35)">${L.u.join('')}</g><g fill="#C9DAEA">${L.m.join('')}</g><g fill="url(#nyf)">${L.t.join('')}</g><g fill="rgba(255,255,255,.9)">${L.h.join('')}</g>`;
+  };
+  const line = (x0, y0, x1, y1, n) => Array.from({ length: n + 1 }, (_, i) => [x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
+  const arc = (cx, cy, r, a0, a1, n) => Array.from({ length: n + 1 }, (_, i) => { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; });
+  // борода: заполняем «каплю» пушистыми кружками
+  const beard = []; for (let y = -30; y <= 40; y += 5) { const t = (y + 30) / 70, hw = 34 * Math.sin(Math.PI * Math.min(1, .25 + t * .85)) * (1 - t * .55) + 4; beard.push(...line(100 - hw, y, 100 + hw, y, Math.max(1, Math.round(hw / 6)))); }
+  const red = 'url(#nyr)';
+  return `<svg class="nycoat" viewBox="-60 -125 320 360" aria-hidden="true">
+    <defs>
+      <radialGradient id="nyf" cx="40%" cy="25%" r="85%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F3F8FD"/><stop offset="1" stop-color="#D5E4F1"/></radialGradient>
+      <radialGradient id="nyr" cx="35%" cy="25%" r="90%"><stop offset="0" stop-color="#F0504A"/><stop offset=".55" stop-color="#C8161E"/><stop offset="1" stop-color="#7E0710"/></radialGradient>
+      <radialGradient id="nys" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#FCD9C2"/><stop offset="1" stop-color="#E9A985"/></radialGradient>
+    </defs>
+    <!-- валенки -->
+    <g transform="translate(0 10)"><g fill="#C9D3DC" stroke="#8C9AA8" stroke-width="1.5"><path d="M56 184c-3 16 0 30 16 32h24c6 0 9-4 8-9l-5-23z"/><path d="M144 184c3 16 0 30-16 32h-24c-6 0-9-4-8-9l5-23z"/></g><g stroke="#C8161E" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M60 200l4 4 4-4 4 4 4-4 4 4 4-4"/><path d="M116 200l4 4 4-4 4 4 4-4 4 4 4-4"/></g></g>
+    
+    <!-- рукава и варежки -->
+    <path d="M14 46C-8 60-20 86-16 112l20 2c0-18 6-36 22-48z" fill="${red}"/>
+    <path d="M186 46c22 14 34 40 30 66l-20 2c0-18-6-36-22-48z" fill="${red}"/>
+    ${fur(line(-18, 112, 6, 114, 4), 9, 9)}${fur(line(194, 114, 218, 112, 4), 9, 9)}
+    <g fill="#1F6F8B"><ellipse cx="-6" cy="132" rx="15" ry="17"/><ellipse cx="206" cy="132" rx="15" ry="17"/></g>
+    <g fill="#2A8CAD"><ellipse cx="-14" cy="124" rx="6" ry="9" transform="rotate(-25 -14 124)"/><ellipse cx="214" cy="124" rx="6" ry="9" transform="rotate(25 214 124)"/></g>
+    <!-- подол шубы мехом снизу -->
+    ${fur(arc(100, 100, 98, 38, 142, 26), 9, 9)}
+    <!-- плечи / воротник -->
+    ${fur(arc(100, 100, 97, 206, 334, 30), 10, 10)}
+    <!-- голова -->
+    <ellipse cx="100" cy="-44" rx="34" ry="36" fill="url(#nys)"/>
+    <!-- шапка -->
+    <path d="M62 -62C60 -96 80 -116 106 -116c20 0 34 10 42 26 6 12 8 24 6 34l-12-2c0-10-2-18-8-24 2 8 2 14 0 20H62z" fill="${red}"/>
+    ${fur(line(60, -64, 140, -64, 12), 11, 11)}
+    ${fur([[149, -48], [151, -46], [147, -50], [150, -51]], 12, 12)}
+    <!-- лицо -->
+    <g fill="#3A2016"><ellipse cx="88" cy="-46" rx="3.6" ry="4.2"/><ellipse cx="112" cy="-46" rx="3.6" ry="4.2"/></g>
+    <g fill="#fff"><circle cx="89.2" cy="-47.5" r="1.2"/><circle cx="113.2" cy="-47.5" r="1.2"/></g>
+    <g fill="rgba(240,110,110,.45)"><ellipse cx="78" cy="-34" rx="8" ry="5"/><ellipse cx="122" cy="-34" rx="8" ry="5"/></g>
+    ${fur(line(80, -55, 92, -57, 3), 6, 6)}${fur(line(108, -57, 120, -55, 3), 6, 6)}
+    <!-- борода и усы -->
+    ${fur(beard, 13, 9)}
+    ${fur(line(78, -26, 98, -24, 4), 9, 8)}${fur(line(102, -24, 122, -26, 4), 8, 9)}
+    <ellipse cx="100" cy="-32" rx="9" ry="7.5" fill="#E8656C"/><ellipse cx="97" cy="-35" rx="3" ry="2.2" fill="rgba(255,255,255,.55)"/>
   </svg>`;
 }
 
@@ -1224,7 +1258,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '46';
+const APP_V = '47';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1293,8 +1327,24 @@ const VAL_QUOTES = [
   ['Любовь никогда не перестаёт.', 'Апостол Павел · Первое послание к Коринфянам, 13:8'],
   ['Зрелая любовь говорит: «Я нуждаюсь в тебе, потому что люблю тебя».', 'Эрих Фромм · «Искусство любить»']
 ];
+const NY_QUOTES = [
+  ['Пусть в новом году доходы растут быстрее расходов.', 'Новогоднее пожелание'],
+  ['Загадайте желание — и запишите его в план. Мечта с планом становится целью.', 'Новогоднее пожелание'],
+  ['Лучший подарок себе под ёлку — копилка, в которую откладываете каждый месяц.', 'Новогоднее пожелание'],
+  ['Новый год — время подвести итоги и честно посмотреть, куда ушли деньги.', 'Новогоднее пожелание'],
+  ['Год начинается с первого дня, а запас — с первой отложенной купюры.', 'Новогоднее пожелание'],
+  ['Пусть всё задуманное сбудется, а всё потраченное — окупится.', 'Новогоднее пожелание'],
+  ['Встречайте новый год без долгов — а если есть, с планом, как их закрыть.', 'Новогоднее пожелание'],
+  ['Пусть в новом году будет больше вечеров вместе, чем покупок, о которых жалеешь.', 'Новогоднее пожелание'],
+  ['Как встретишь Новый год, так его и проведёшь.', 'Народная примета'],
+  ['Копейка рубль бережёт.', 'Русская пословица'],
+  ['Путь в тысячу ли начинается с первого шага.', 'Лао-цзы · «Дао дэ цзин»'],
+  ['Бережливость — великий доход.', 'Цицерон · «Парадоксы стоиков»'],
+  ['Остерегайтесь мелких расходов: маленькая течь потопит большой корабль.', 'Бенджамин Франклин · «Путь к богатству»'],
+  ['Пока мы откладываем жизнь, она проходит.', 'Сенека · «Нравственные письма к Луцилию»']
+];
 function renderQuote(animate){
-  const val = SEASON === 'val', Q = val ? VAL_QUOTES : QUOTES, key = val ? 'qLastVal' : 'qLast';
+  const val = SEASON === 'val', ny = SEASON === 'ny', Q = val ? VAL_QUOTES : ny ? NY_QUOTES : QUOTES, key = val ? 'qLastVal' : ny ? 'qLastNy' : 'qLast';
   const last = LS.get(key, -1);
   let i = Math.floor(Math.random() * Q.length);
   if (i === last || i === qIdx) i = (i + 1) % Q.length;
