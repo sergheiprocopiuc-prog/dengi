@@ -1182,7 +1182,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '43';
+const APP_V = '44';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1733,9 +1733,10 @@ function histListHtml(){
 // Журнал месяца: кэш с сервера + свежие события из состояния, которых в кэше ещё нет (сразу после записи или правки)
 function monthLog(m){
   const sl = ((state && state.log) || []).filter(e => (e.k || '').slice(0, 7) === m), log = logByMonth[m];
-  if (!log) return sl;
-  const key = e => e.t + '|' + e.a + '|' + (e.id || '') + '|' + e.d, have = new Set(log.map(key)), fresh = sl.filter(e => !have.has(key(e)));
-  return fresh.length ? fresh.concat(log) : log;
+  const key = e => e.t + '|' + e.a + '|' + (e.id || '') + '|' + e.d, have = new Set((log || []).map(key)), fresh = log ? sl.filter(e => !have.has(key(e))) : sl;
+  const all = log ? (fresh.length ? fresh.concat(log) : log) : sl;
+  // записи «задним числом» стоят в журнале позже, но показываем их в своём дне: по дню, затем по времени (новые сверху)
+  return all.map((e, i) => [e, i]).sort((x, y) => (y[0].k || '').localeCompare(x[0].k || '') || String(y[0].t || '').slice(6).localeCompare(String(x[0].t || '').slice(6)) || x[1] - y[1]).map(x => x[0]);
 }
 // Правки и правила, сделанные в более поздних месяцах, тоже относятся к записям этого месяца
 function laterEvents(m){ return ((state && state.log) || []).filter(e => (e.k || '').slice(0, 7) > m && /^(✏|📌|🎁 раскрыл)/.test(String(e.a || ''))); }
