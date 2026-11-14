@@ -592,6 +592,18 @@ body.modal-on{overflow:hidden}
 .modal input[type=date].field{display:block;width:100%;-webkit-appearance:none;appearance:none;min-height:56px;color-scheme:dark}
 .card.debt .btns{display:flex;gap:8px;flex-wrap:nowrap}.card.debt .btns .block{flex:1;width:auto;min-width:0}.card.debt [data-dhide]{flex:0 0 auto;padding-left:16px;padding-right:16px}.card.debt [data-dhide] svg{margin:0}
 
+/* Новый год: красная кнопка в накинутой шубке со снежным мехом на воротнике */
+body.ny .mic{background:radial-gradient(circle at 36% 30%,#FF6F6A 0%,#E8342F 32%,#C3141C 62%,#7E0710 100%);
+  box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -16px 30px rgba(60,0,8,.4),0 26px 50px -18px rgba(214,30,40,.7),0 10px 22px -12px rgba(0,0,0,.8)}
+body.ny .mic.rec{box-shadow:inset 0 2px 1px rgba(255,255,255,.2),inset 0 -16px 30px rgba(60,0,8,.35),0 0 0 6px rgba(214,30,40,.16),0 30px 60px -16px rgba(214,30,40,.85)}
+body.ny .mic svg.nycoat{position:absolute;left:-15%;top:-15%;width:130%;height:130%;filter:none;z-index:1;opacity:1;transform:none}
+body.ny .mic>svg:not(.nycoat):not(.ok-ic){position:relative;z-index:2;transform:translateY(6%)}
+body.ny .mic.done>svg:not(.nycoat):not(.ok-ic){transform:translateY(6%) scale(.6)}
+body.ny .mic .ok-ic{z-index:2}
+body.ny .mic.done .ok-ic{transform:translateY(6%)}
+body.ny .ring{border-color:#FF6F6A}
+body.ny .micwrap::after{border-color:rgba(255,111,106,.55)}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -930,7 +942,7 @@ function nySnowPiles(){
           const surf = mic.r + 1 + (k >= 0 ? cap[k] : 0);
           if (d < surf && dy < mic.r * .35) {
             const nx = dx / d, ny = dy / d;
-            const top = Math.abs(a + Math.PI / 2) < .85;          // верхняя часть круга — снег налипает
+            const top = false;                                   // сверху теперь меховой воротник — снег не налипает, а соскальзывает          // верхняя часть круга — снег налипает
             if (k >= 0 && top && cap[k] < 15 - Math.abs(a + Math.PI / 2) * 11 && Math.random() < .6) { cap[k] += .7; grains.splice(i, 1); continue; }
             g.x = mic.cx + nx * surf; g.y = mic.cy + ny * surf;
             const vn = g.vx * nx + g.vy * ny; if (vn < 0) { g.vx -= vn * nx; g.vy -= vn * ny; }   // соскальзывает по склону
@@ -959,11 +971,11 @@ function nySnowPiles(){
       // сугробы понемногу «тают», чтобы снег всё время двигался
       relax(cap, 1.2); for (let k = 0; k < cap.length; k++) cap[k] = Math.max(0, cap[k] - dt * .06);
       const pg = (x, y, hgt) => { const gr = ctx.createLinearGradient(0, y - (hgt || 14), 0, y + 2); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.75, '#F4FAFF'); gr.addColorStop(1, '#C9E2F5'); return gr; };
-      // шапка на микрофоне
-      ctx.beginPath(); let started = false;
+      // шапка на микрофоне (выключена: у кнопки меховой воротник)
+      if (false) { ctx.beginPath(); let started = false;
       for (let k = 0; k < cap.length; k++) { const a = -Math.PI + k / (cap.length - 1) * Math.PI; if (Math.abs(a + Math.PI / 2) > 1.1) continue; const rr = mic.r + cap[k]; const x = mic.cx + Math.cos(a) * rr, y = mic.cy + Math.sin(a) * rr; started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true); }
       for (let k = cap.length - 1; k >= 0; k--) { const a = -Math.PI + k / (cap.length - 1) * Math.PI; if (Math.abs(a + Math.PI / 2) > 1.1) continue; ctx.lineTo(mic.cx + Math.cos(a) * (mic.r - .5), mic.cy + Math.sin(a) * (mic.r - .5)); }
-      ctx.closePath(); ctx.fillStyle = pg(mic.cx, mic.cy - mic.r * .55, mic.r * .55); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 3; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.closePath(); ctx.fillStyle = pg(mic.cx, mic.cy - mic.r * .55, mic.r * .55); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 3; ctx.fill(); ctx.shadowBlur = 0; }
       // сугробы на кнопках
       for (const r of acts) {
         const p = piles.get(r.i); relax(p.h, 1.1); for (let k = 0; k < p.w; k++) p.h[k] = Math.max(4, p.h[k] - dt * .03);
@@ -1029,6 +1041,34 @@ const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke
   <path d="M31 26h29"/><path d="M56.4 23.2 60 26l-3.6 2.8"/><path d="M32 24l-3 2 3 2M35 24l-3 2 3 2"/>
 </svg>`;
 
+// Новый год: красная кнопка в накинутой «шубке» — пушистый снежный мех на воротнике сверху, бока чистые
+function nyCoat(){
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const C = 100, R = 100, under = [], top = [], hl = [];
+  const N = 54;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, a = Math.PI * (1.13 + .74 * t);                // дуга воротника: от левого плеча через верх к правому
+    const mid = 1 - Math.abs(t - .5) * 2, w = 7 + 7 * Math.pow(mid, .7);   // толще всего сверху, к краям тоньше
+    const droop = Math.pow(1 - mid, 3) * 16;                          // концы чуть свисают — накинуто на плечи
+    const rr = R - 1 - w * .15, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr + droop;
+    const nx = Math.cos(a), ny = Math.sin(a);
+    for (let k = 0; k < 3; k++) {
+      const off = (k - 1) * w * .45 + (rnd() - .5) * 3, cr = w * (.5 + rnd() * .28);
+      const px = x + nx * off + (rnd() - .5) * 3, py = y + ny * off + (rnd() - .5) * 3;
+      under.push(`<circle cx="${(px + 1).toFixed(1)}" cy="${(py + 3).toFixed(1)}" r="${(cr * 1.05).toFixed(1)}"/>`);
+      top.push(`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"/>`);
+      if (rnd() < .35) hl.push(`<circle cx="${(px - cr * .3).toFixed(1)}" cy="${(py - cr * .35).toFixed(1)}" r="${(cr * .32).toFixed(1)}"/>`);
+    }
+  }
+  return `<svg class="nycoat" viewBox="-30 -30 260 260" aria-hidden="true">
+    <defs><radialGradient id="nyf" cx="40%" cy="25%" r="85%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F3F8FD"/><stop offset="1" stop-color="#D5E4F1"/></radialGradient></defs>
+    <g fill="rgba(70,0,10,.38)" filter="blur(0)">${under.join('')}</g>
+    <g fill="#C9DAEA">${top.map(c => c.replace(/r="([\d.]+)"/, (m, v) => `r="${(+v + .8).toFixed(1)}"`)).join('')}</g>
+    <g fill="url(#nyf)">${top.join('')}</g>
+    <g fill="rgba(255,255,255,.9)">${hl.join('')}</g>
+  </svg>`;
+}
+
 (function decorate(){
   const s = SEASON;
   const fx = $('fx'), r = (a, b) => a + Math.random() * (b - a);
@@ -1044,6 +1084,7 @@ const CUPID = `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke
     let b = ''; for (let i = 0; i < 18; i++) b += `<i class="bulb" style="--c:${cols[i % cols.length]};--l:-${(i * .37 % 1.8).toFixed(2)}s"></i>`;
     g.innerHTML = b; document.body.appendChild(g);
     nySky(fx); nySnowPiles();
+    $('mic').insertAdjacentHTML('afterbegin', nyCoat());
   } else if (s === 'val') {
     document.body.classList.add('val');
     $('sIcon').innerHTML = '';
@@ -1183,7 +1224,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '45';
+const APP_V = '46';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
