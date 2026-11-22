@@ -606,6 +606,9 @@ body.ny .micwrap::after{border-color:rgba(255,111,106,.55)}
 body.ny .micwrap{--sz:min(46vw,26vh,200px);margin-top:12vh}
 body.ny .micwrap::before{display:none}
 
+.ev .evdel{flex:0 0 auto;width:40px;height:40px;margin-left:6px;border-radius:12px;border:1px solid rgba(239,64,80,.35);background:var(--neg-a);color:#FF7A85;display:grid;place-items:center;padding:0}
+.ev .evdel svg{width:18px;height:18px}
+
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
 body.val .app{min-height:calc(100dvh - var(--st) - 22px)}
@@ -1258,7 +1261,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '51';
+const APP_V = '52';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1837,7 +1840,8 @@ function histListHtml(){
       }
       let evIc = 'info', evT = esc(e.a);
       for (const [re, n, l] of EV) if (re.test(e.a)) { evIc = n; evT = l; break; }
-      h += `<div class="ev">${ic(evIc)}<span class="tx"><b style="color:var(--text);font-weight:600">${esc(e.who)}</b> · ${evT}${e.id ? ' ' + esc(e.id) : ''}${e.d ? '<br><span style="color:var(--text-3)">' + esc(String(e.d).replace(/^\S+\s(?=[−+$€\d])/, '')) + '</span>' : ''}</span><time>${time}</time></div>`;
+      const evId = /^❌/.test(String(e.a || '')) ? Number(String(e.id || '').replace('#', '')) || 0 : 0;   // отменённую запись можно удалить совсем
+      h += `<div class="ev">${ic(evIc)}<span class="tx"><b style="color:var(--text);font-weight:600">${esc(e.who)}</b> · ${evT}${e.id ? ' ' + esc(e.id) : ''}${e.d ? '<br><span style="color:var(--text-3)">' + esc(String(e.d).replace(/^\S+\s(?=[−+$€\d])/, '')) + '</span>' : ''}</span><time>${time}</time>${evId ? `<button class="evdel" data-del="${evId}" aria-label="Удалить запись ${esc(e.id)} навсегда" title="Удалить навсегда">${ic('trash-2')}</button>` : ''}</div>`;
     });
     h += '</div>';
   });
