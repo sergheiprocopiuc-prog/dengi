@@ -1258,7 +1258,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '49';
+const APP_V = '50';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1935,8 +1935,8 @@ function hsHtml(r){
       h += `<div class="day">${dt.getDate()} ${MONTHS_G[dt.getMonth()]}${hsPer === 'y' ? '' : ', ' + WD[dt.getDay()]}<span>${n} ${plural(n, 'запись', 'записи', 'записей')}</span></div><div class="list">`;
     }
     const sgn = x.type === 'расход' ? '−' : '+', other = x.cur !== 'PRB';
-    h += `<div class="row op"><span class="tile">${ic(catIc(x.cat))}</span><span class="tx"><span class="t1">${esc(x.name)}</span><span class="t2">${x.store ? 'в чеке «' + esc(x.store) + '» · ' : esc(x.cat || '') + ' · '}${esc(x.who || '')}</span></span>
-      <span class="rt"><span class="a ${x.type === 'расход' ? 'neg' : 'pos'}">${sgn}${esc(money(x.amount, x.sym))}</span>${other ? `<span class="a2">≈ ${fmt(x.main)} р. ПМР</span>` : ''}</span></div>`;
+    h += `<button class="row op" data-edit="${x.id}" aria-label="Изменить: ${esc(x.name)}"><span class="tile">${ic(catIc(x.cat))}</span><span class="tx"><span class="t1">${esc(x.name)}</span><span class="t2">${x.store ? 'в чеке «' + esc(x.store) + '» · ' : esc(x.cat || '') + ' · '}${esc(x.who || '')}</span></span>
+      <span class="rt"><span class="a ${x.type === 'расход' ? 'neg' : 'pos'}">${sgn}${esc(money(x.amount, x.sym))}</span>${other ? `<span class="a2">≈ ${fmt(x.main)} р. ПМР</span>` : ''}</span><span class="chev">${ic('pen-line')}</span></button>`;
   });
   if (cur) h += '</div>';
   if (r.more) h += `<div class="note">Показаны последние 200 записей; итог посчитан по всем ${r.count}.</div>`;
@@ -2488,7 +2488,8 @@ function renderEdit(){
       if (j.state) setState(j.state);
       if (j.ok) {
         toast('Запись изменена'); delete editSrc[e.id]; ed = null; modalGuard = null; closeModal(null);
-        Object.keys(logByMonth).forEach(k => delete logByMonth[k]); loadMonthLog(histMonth || curMonth()); return;
+        Object.keys(logByMonth).forEach(k => delete logByMonth[k]); loadMonthLog(histMonth || curMonth());
+        if (histQuery.trim().length >= 2) { hsRes = null; runSearch(); } return;
       }
       toast(j.error || 'Не получилось');
     } catch(err){ toast('Нет связи — попробуйте ещё раз'); }
