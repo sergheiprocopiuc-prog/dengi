@@ -1254,6 +1254,17 @@ $('saveCfg').onclick = () => {
   showMain(); refresh(); flush(true);
 };
 
+/* ---------- «Обновить»: сбрасывает кэш данных и файлов приложения и перезагружает. Очередь неотправленных записей и настройки не трогаем ---------- */
+async function hardRefresh(){
+  if (!navigator.onLine) { toast('Нет интернета — обновлю, когда появится связь'); return; }
+  toast('Обновляю…');
+  try { const j = await api({ action: 'state', fresh: true }, 20000); if (j && j.state) setState(j.state); } catch(e){}
+  ['logByMonth', 'usdrub'].forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
+  try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch(e){}
+  try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update().catch(() => {}))); } } catch(e){}
+  location.reload();
+}
+
 /* ================= главный экран ================= */
 function showMain(){
   $('setup').classList.add('hidden'); $('main').classList.remove('hidden');
@@ -1261,7 +1272,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '52';
+const APP_V = '53';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -2211,7 +2222,7 @@ function settingsHtml(){
   h += `<div class="h2"><h2>Связь</h2></div><div class="list">
     <div class="row"><span class="tile">${ic(off ? 'wifi-off' : 'wifi')}</span><span class="tx"><span class="t1">${off ? 'Нет интернета' : 'На связи'}</span><span class="t2">${n ? 'Ждут отправки: ' + n : 'Все записи отправлены'}</span></span></div>
     <div class="row"><span class="tile">${ic('arrow-left-right')}</span><span class="tx"><span class="t1">Курсы валют</span><span class="t2">${state && state.ratesAt ? 'Обновлены ' + esc(state.ratesAt) : 'Дата обновления неизвестна'} · рубль ПМР — из таблицы</span></span></div>
-    <button class="row" id="stRefresh"><span class="tile">${ic('rotate-cw')}</span><span class="tx"><span class="t1">Обновить данные</span><span class="t2">Загрузить свежие записи из таблицы</span></span><span class="chev">${ic('chevron-right')}</span></button></div>`;
+    <button class="row" id="stRefresh"><span class="tile">${ic('rotate-cw')}</span><span class="tx"><span class="t1">Обновить приложение</span><span class="t2" style="white-space:normal">Сбросить кэш, загрузить свежие данные и новую версию — без перезахода</span></span><span class="chev">${ic('chevron-right')}</span></button></div>`;
   h += `<div class="h2"><h2>О приложении</h2></div><div class="list"><div class="row"><span class="tile">${ic('info')}</span><span class="tx"><span class="t1">Версия ${APP_V}</span><span class="t2" style="white-space:normal">Записывать можно и через Telegram-бота — всё попадает в одну таблицу.</span></span></div></div>`;
   return h;
 }
@@ -2219,7 +2230,7 @@ function bindSettings(sh){
   sh.querySelector('#stSetup').onclick = () => { showSetup(); $('setupBack').classList.toggle('hidden', !cfg); };
   sh.querySelector('#stHide').onclick = () => { hideBal = !hideBal; LS.set('hideBal', hideBal); renderPanel(); };
   sh.querySelectorAll('[data-bc]').forEach(b => b.onclick = () => { balCur = b.dataset.bc; LS.set('balCur', balCur); renderPanel(); });
-  sh.querySelector('#stRefresh').onclick = async () => { toast('Обновляю…'); try { await refresh(); toast('Данные обновлены'); } catch(e){ toast('Нет связи — попробуйте позже'); } renderPanel(); };
+  sh.querySelector('#stRefresh').onclick = () => hardRefresh();
 }
 
 
