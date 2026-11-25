@@ -1272,7 +1272,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '54';
+const APP_V = '55';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1412,6 +1412,10 @@ function renderPanel(){
 const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ').replace('-', '−');
 // суммы меньше 1 (копейки/центы) показываем с дробью, чтобы не было «−$0»
 const fmtA = a => a > 0 && a < 1 ? a.toFixed(2).replace('.', ',') : fmt(a);
+// Точная сумма для остатков кошельков: с копейками, если они есть (−415,42 р. ПМР, −$0,31)
+const moneyX = (v, sym) => { const r = Math.round(v * 100) / 100, a = Math.abs(r), neg = r < 0;
+  const t = (Number.isInteger(a) ? fmt(a) : fmt(Math.trunc(a)) + ',' + String(Math.round((a % 1) * 100)).padStart(2, '0'));
+  return sym === '$' || sym === '€' ? (neg ? '−' : '') + sym + t : (neg ? '−' : '') + t + ' ' + sym; };
 const money = (v, sym) => { const a = Math.abs(v), neg = v < 0 && (a >= 0.5 || a >= 0.005 && a < 1); return sym === '$' || sym === '€' ? (neg ? '−' : '') + sym + fmtA(a) : (neg ? '−' : '') + fmtA(a) + ' ' + sym; };
 const nf = (v, d) => { if (!isFinite(v)) return ''; const s = v.toFixed(d).replace(/\.?0+$/, ''); const [i, f] = s.split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? ',' + f : ''); };
 const secHead = (t, aside) => `<div class="sh"><h1>${t}</h1>${aside || ''}</div>`;
@@ -1456,7 +1460,7 @@ function walletHtml(){
   h += `<div class="bal"><div class="btop"><div class="lb">${ic('wallet')}Общий баланс</div><button class="eye" id="eyeBtn" aria-pressed="${hideBal}" aria-label="${hideBal ? 'Показать суммы' : 'Скрыть суммы'}">${ic(hideBal ? 'eye-off' : 'eye')}</button></div>
     <div class="big"><b class="amt">${hideBal ? MASK : (isSym ? esc(tot.sym) : '') + fmt(tot.v)}</b>${isSym ? '' : `<span>${esc(tot.sym)}</span>`}</div>
     <div class="curs" role="group" aria-label="Показать в валюте">${totals.map(t => `<button data-cur="${t.cur}" class="${t.cur === tot.cur ? 'on' : ''}" aria-label="${esc(curName(t.cur))}">${esc(CUR_SHORT[t.cur] || t.sym)}</button>`).join('')}</div>
-    ${Object.keys(hold).length ? `<div class="hold"><div class="lb2">Фактически на руках и на картах</div><div class="vals">${Object.values(hold).map(x => `<span>${mk(money(x.v, x.sym))}</span>`).join('')}</div></div>` : ''}
+    ${Object.keys(hold).length ? `<div class="hold"><div class="lb2">Фактически на руках и на картах</div><div class="vals">${Object.values(hold).map(x => `<span>${mk(moneyX(x.v, x.sym))}</span>`).join('')}</div></div>` : ''}
     ${hideBal ? '' : pigTotalLine(tot)}
     <div class="note" style="margin-top:12px">Итог пересчитан в «${esc(curName(tot.cur))}» по курсу${state.ratesAt ? ' на ' + esc(state.ratesAt) : ''}. Курс рубля ПМР — из таблицы.</div></div>`;
   const M = state.month || {}, diff = (M.earned || 0) - (M.spent || 0);
@@ -1470,7 +1474,7 @@ function walletHtml(){
   ws.forEach(w => {
     const [type, icn] = walletType(w.name);
     h += `<div class="row"><span class="tile">${ic(icn)}</span><span class="tx"><span class="t1">${esc(w.name)}</span><span class="t2">${type} · ${esc(w.cur || '')}</span></span>
-      <span class="rt"><span class="a ${w.bal < 0 ? 'neg' : ''}" style="${Math.abs(w.bal) < 0.001 ? 'color:var(--text-3)' : ''}">${mk(money(w.bal, w.sym))}</span></span></div>`;
+      <span class="rt"><span class="a ${w.bal < 0 ? 'neg' : ''}" style="${Math.abs(w.bal) < 0.001 ? 'color:var(--text-3)' : ''}">${mk(moneyX(w.bal, w.sym))}</span></span></div>`;
   });
   if (!ws.length) h += `<div class="empty">Кошельков пока нет</div>`;
   h += '</div>';
