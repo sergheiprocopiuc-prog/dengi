@@ -1272,7 +1272,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '53';
+const APP_V = '54';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1410,7 +1410,9 @@ function renderPanel(){
 
 /* ---------- форматирование ---------- */
 const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ').replace('-', '−');
-const money = (v, sym) => sym === '$' || sym === '€' ? (v < 0 ? '−' : '') + sym + fmt(Math.abs(v)) : fmt(v) + ' ' + sym;
+// суммы меньше 1 (копейки/центы) показываем с дробью, чтобы не было «−$0»
+const fmtA = a => a > 0 && a < 1 ? a.toFixed(2).replace('.', ',') : fmt(a);
+const money = (v, sym) => { const a = Math.abs(v), neg = v < 0 && (a >= 0.5 || a >= 0.005 && a < 1); return sym === '$' || sym === '€' ? (neg ? '−' : '') + sym + fmtA(a) : (neg ? '−' : '') + fmtA(a) + ' ' + sym; };
 const nf = (v, d) => { if (!isFinite(v)) return ''; const s = v.toFixed(d).replace(/\.?0+$/, ''); const [i, f] = s.split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? ',' + f : ''); };
 const secHead = (t, aside) => `<div class="sh"><h1>${t}</h1>${aside || ''}</div>`;
 const CUR_SHORT = { PRB: 'р.', USD: '$', EUR: '€', RUB: '₽', MDL: 'L' };
