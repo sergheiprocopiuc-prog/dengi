@@ -608,6 +608,13 @@ body.ny .micwrap::before{display:none}
 
 .ev .evdel{flex:0 0 auto;width:40px;height:40px;margin-left:6px;border-radius:12px;border:1px solid rgba(239,64,80,.35);background:var(--neg-a);color:#FF7A85;display:grid;place-items:center;padding:0}
 .ev .evdel svg{width:18px;height:18px}
+/* галочки кошельков: какие входят в «Общий баланс» */
+.wrow{gap:12px}
+.wchk{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:2px solid rgba(255,255,255,.38);background:transparent;display:grid;place-items:center;padding:0;color:#0B1410;cursor:pointer}
+.wchk.on{background:var(--gold);border-color:var(--gold)}
+.wchk svg{width:18px;height:18px;stroke-width:3}
+.wrow.off .tile,.wrow.off .tx,.wrow.off .rt{opacity:.45}
+@media (max-width:360px){.wrow .tile{display:none}}
 
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
@@ -1272,7 +1279,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '55';
+const APP_V = '56';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1442,6 +1449,7 @@ const catIc = n => CAT_IC[n] || 'circle-ellipsis';
 /* ================= кошелёк ================= */
 let balCur = LS.get('balCur', 'PRB');
 let hideBal = LS.get('hideBal', false);
+let walOff = LS.get('walOff', []);                       // кошельки, снятые галочкой: не входят в «Общий баланс»
 const MASK = '•••••';
 const mk = s => hideBal ? MASK : s;
 function walletType(n){
@@ -1451,17 +1459,21 @@ function walletType(n){
 }
 function walletHtml(){
   if (!state) return secHead('Кошелёк') + `<div class="empty">${ic('clock-3')}Загружаю данные…</div>`;
-  const totals = state.totals || [];
+  const allW = state.wallets || [], onW = allW.filter(w => walOff.indexOf(w.name) < 0), R = state.rates;
+  // все галочки стоят — берём итог с сервера; иначе пересчитываем только отмеченные кошельки по курсу
+  const totals = onW.length === allW.length || !R ? (state.totals || []) : (state.totals || []).map(t => ({ cur: t.cur, sym: t.sym,
+    v: Math.round(onW.reduce((a, w) => a + w.bal / (R[w.cur] || 1) * (R[t.cur] || 1), 0)) }));
   const tot = totals.find(t => t.cur === balCur) || totals.find(t => t.cur === 'PRB') || { cur: 'PRB', v: 0, sym: 'р. ПМР' };
   const isSym = tot.sym === '$' || tot.sym === '€';
   // остатки по валютам: складываем только кошельки одной валюты, без пересчёта
-  const hold = {}; (state.wallets || []).forEach(w => { if (Math.abs(w.bal) > 0.001) { const k = w.cur || w.sym; hold[k] = hold[k] || { v: 0, sym: w.sym }; hold[k].v += w.bal; } });
+  const hold = {}; onW.forEach(w => { if (Math.abs(w.bal) > 0.001) { const k = w.cur || w.sym; hold[k] = hold[k] || { v: 0, sym: w.sym }; hold[k].v += w.bal; } });
   let h = secHead('Кошелёк');
   h += `<div class="bal"><div class="btop"><div class="lb">${ic('wallet')}Общий баланс</div><button class="eye" id="eyeBtn" aria-pressed="${hideBal}" aria-label="${hideBal ? 'Показать суммы' : 'Скрыть суммы'}">${ic(hideBal ? 'eye-off' : 'eye')}</button></div>
     <div class="big"><b class="amt">${hideBal ? MASK : (isSym ? esc(tot.sym) : '') + fmt(tot.v)}</b>${isSym ? '' : `<span>${esc(tot.sym)}</span>`}</div>
     <div class="curs" role="group" aria-label="Показать в валюте">${totals.map(t => `<button data-cur="${t.cur}" class="${t.cur === tot.cur ? 'on' : ''}" aria-label="${esc(curName(t.cur))}">${esc(CUR_SHORT[t.cur] || t.sym)}</button>`).join('')}</div>
     ${Object.keys(hold).length ? `<div class="hold"><div class="lb2">Фактически на руках и на картах</div><div class="vals">${Object.values(hold).map(x => `<span>${mk(moneyX(x.v, x.sym))}</span>`).join('')}</div></div>` : ''}
     ${hideBal ? '' : pigTotalLine(tot)}
+    ${onW.length < allW.length ? `<div class="note" style="margin-top:10px;color:var(--gold)">В балансе ${onW.length ? 'только: ' + onW.map(w => esc(w.name)).join(', ') : 'нет ни одного кошелька'} — галочки в «Кошельках» ниже</div>` : ''}
     <div class="note" style="margin-top:12px">Итог пересчитан в «${esc(curName(tot.cur))}» по курсу${state.ratesAt ? ' на ' + esc(state.ratesAt) : ''}. Курс рубля ПМР — из таблицы.</div></div>`;
   const M = state.month || {}, diff = (M.earned || 0) - (M.spent || 0);
   h += `<div class="h2"><h2>В этом месяце</h2><span class="aside">${esc(M.sym || 'р. ПМР')}</span></div>
@@ -1473,7 +1485,8 @@ function walletHtml(){
   h += `<div class="h2"><h2>Кошельки</h2><button class="mini" id="goRec">${ic('scale')}Сверить</button></div><div class="list">`;
   ws.forEach(w => {
     const [type, icn] = walletType(w.name);
-    h += `<div class="row"><span class="tile">${ic(icn)}</span><span class="tx"><span class="t1">${esc(w.name)}</span><span class="t2">${type} · ${esc(w.cur || '')}</span></span>
+    const on = walOff.indexOf(w.name) < 0;
+    h += `<div class="row wrow ${on ? '' : 'off'}"><button class="wchk ${on ? 'on' : ''}" data-wchk="${esc(w.name)}" role="checkbox" aria-checked="${on}" aria-label="Учитывать «${esc(w.name)}» в общем балансе">${on ? ic('check') : ''}</button><span class="tile">${ic(icn)}</span><span class="tx"><span class="t1">${esc(w.name)}</span><span class="t2">${type} · ${esc(w.cur || '')}</span></span>
       <span class="rt"><span class="a ${w.bal < 0 ? 'neg' : ''}" style="${Math.abs(w.bal) < 0.001 ? 'color:var(--text-3)' : ''}">${mk(moneyX(w.bal, w.sym))}</span></span></div>`;
   });
   if (!ws.length) h += `<div class="empty">Кошельков пока нет</div>`;
@@ -1540,6 +1553,10 @@ function bindDebts(root){
 }
 function bindWallet(sh){
   bindDebts(sh);
+  sh.querySelectorAll('[data-wchk]').forEach(b => b.onclick = () => {
+    const n = b.dataset.wchk; walOff = walOff.indexOf(n) < 0 ? walOff.concat(n) : walOff.filter(x => x !== n);
+    LS.set('walOff', walOff); renderPanel();
+  });
   const eye = sh.querySelector('#eyeBtn'); if (eye) eye.onclick = () => { hideBal = !hideBal; LS.set('hideBal', hideBal); renderPanel(); };
   const g = sh.querySelector('#goRec'); if (g) g.onclick = () => { recResult = null; openPanel('r'); };
   sh.querySelectorAll('.curs button').forEach(b => b.onclick = () => { balCur = b.dataset.cur; LS.set('balCur', balCur); renderPanel(); });
