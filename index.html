@@ -1285,7 +1285,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '57';
+const APP_V = '58';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1514,19 +1514,23 @@ function debtsHtml(){
   ds.forEach(d => {
     const owe = d.net < 0, left = Math.abs(d.net), k = debtKey(d), open = debtOpen === k;
     // каждая строка истории долга — кнопка «Изменить»: сумма, дата, с кем, тип (взяли / вернули) или удалить
-    const hist = (d.hist || []).map(x => x.id ? `<button class="dh" data-edit="${x.id}" aria-label="Изменить запись: ${esc((HIST_L[x.t] || '') + ' ' + money(x.a, d.sym))}"><span>${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}</span>${ic('pen-line')}</button>`
-      : `<div class="dh"><span>${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}</span></div>`).join('');
+    const hl = x => `${HIST_L[x.t] || ''} ${money(x.a, d.sym)}${x.oa ? ' (' + money(x.oa, x.os) + ')' : ''} · ${esc(x.d)}`;
+    const hist = (d.hist || []).map(x => x.id ? `<button class="dh" data-edit="${x.id}" aria-label="Изменить запись: ${esc((HIST_L[x.t] || '') + ' ' + money(x.a, d.sym))}"><span>${hl(x)}</span>${ic('pen-line')}</button>`
+      : `<div class="dh"><span>${hl(x)}</span></div>`).join('');
     h += `<div class="card debt ${owe ? 'owe' : 'lent'}">
       <div class="dtop"><span class="tile">${ic('hand-coins')}</span>
         <span class="tx"><span class="t1">${esc(d.who)}</span><span class="t2 ${owe ? 'neg' : 'pos'}">${owe ? 'Мы должны' : 'Должен(на) нам'}</span></span>
         <span class="rt"><span class="a ${owe ? 'neg' : 'pos'}">${money(left, d.sym)}</span></span></div>
       ${hist ? `<div class="dhist">${hist}</div>` : ''}`;
     if (open) {
-      const ws = ((state && state.wallets) || []).filter(w => w.cur === d.cur), cw = debtWallet || d.wallet || (ws[0] && ws[0].name) || '';
-      h += `<div class="dform"><label class="lbl" style="margin-top:0">${owe ? 'Сколько вернули' : 'Сколько вернули нам'}</label>
-        <input class="field" id="dAmt" inputmode="decimal" autocomplete="off" value="${String(left).replace('.', ',')}">
-        <div class="note" style="margin:6px 0 0">Можно вернуть часть — остаток долга останется.</div>
-        ${ws.length > 1 ? `<label class="lbl">${owe ? 'Из кошелька' : 'В кошелёк'}</label><div class="chips">${ws.map(w => `<button class="chip ${w.name === cw ? 'on' : ''}" data-dw="${esc(w.name)}">${esc(w.name)}</button>`).join('')}</div>` : ''}
+      // кошельки всех валют: если вернули в другой валюте — сумма в ней, долг пересчитается по курсу
+      const all = ((state && state.wallets) || []), same = all.filter(w => w.cur === d.cur);
+      const cw = debtWallet || d.wallet || (same[0] && same[0].name) || (all[0] && all[0].name) || '', wo = all.find(w => w.name === cw) || { cur: d.cur, sym: d.sym };
+      const R = state.rates || {}, other = wo.cur !== d.cur, inW = other && R[wo.cur] && R[d.cur] ? Math.round(left / R[d.cur] * R[wo.cur] * 100) / 100 : left;
+      h += `<div class="dform"><label class="lbl" style="margin-top:0">${owe ? 'Сколько вернули' : 'Сколько вернули нам'}, ${esc(wo.sym || d.sym)}</label>
+        <input class="field" id="dAmt" inputmode="decimal" autocomplete="off" value="${String(inW).replace('.', ',')}" data-cur="${esc(wo.cur || d.cur)}">
+        <div class="note" style="margin:6px 0 0">${other ? 'Вернули в другой валюте — долг ' + money(left, d.sym) + ' пересчитается по курсу (≈ ' + money(inW, wo.sym) + ').' : 'Можно вернуть часть — остаток долга останется.'}</div>
+        ${all.length > 1 ? `<label class="lbl">${owe ? 'Из кошелька' : 'В кошелёк'}</label><div class="chips wrapc">${all.map(w => `<button class="chip ${w.name === cw ? 'on' : ''}" data-dw="${esc(w.name)}">${esc(w.name)}</button>`).join('')}</div>` : ''}
         <div class="btns"><button class="btn primary block" id="dGo" data-dk="${esc(k)}">${ic('check')}Записать возврат</button></div>
         <div class="btns" style="margin-top:8px"><button class="btn ghost block" id="dCancel">Отмена</button></div></div>`;
     } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Вернуть долг' : 'Нам вернули'}</button><button class="btn ghost" data-dhide="${esc(k)}" aria-label="Убрать долг из списка" title="Убрать из списка">${ic('trash-2')}</button></div>`;
@@ -1546,17 +1550,19 @@ function bindDebts(root){
   });
   root.querySelectorAll('.debts [data-edit]').forEach(b => b.onclick = e => { e.stopPropagation(); openEdit(Number(b.dataset.edit)); });
   const dc = root.querySelector('#dCancel'); if (dc) dc.onclick = () => { debtOpen = ''; renderPanel(); };
-  root.querySelectorAll('[data-dw]').forEach(b => b.onclick = () => { debtWallet = b.dataset.dw; root.querySelectorAll('[data-dw]').forEach(x => x.classList.toggle('on', x === b)); });
+  root.querySelectorAll('[data-dw]').forEach(b => b.onclick = () => { debtWallet = b.dataset.dw; renderPanel(); });
   const go = root.querySelector('#dGo');
   if (go) go.onclick = async () => {
     const d = ((state && state.debts) || []).find(x => debtKey(x) === go.dataset.dk); if (!d) return;
     const amount = $('dAmt').value.trim(), v = parseFloat(amount.replace(/\s/g, '').replace(',', '.'));
     if (!(v > 0)) return toast('Укажите сумму');
-    if (v > Math.abs(d.net) + 0.005) return toast('Долг — только ' + money(Math.abs(d.net), d.sym));
+    const pc = $('dAmt').dataset.cur || d.cur, R = state.rates || {}, vd = pc !== d.cur && R[pc] && R[d.cur] ? v / R[pc] * R[d.cur] : v;   // сумма в валюте долга
+    if (vd > Math.abs(d.net) * 1.01 + 0.005) return toast('Долг — только ' + money(Math.abs(d.net), d.sym));
+    const wn = debtWallet || d.wallet || '';
     go.disabled = true; go.textContent = 'Записываю…';
     try {
-      const j = await api({ action: 'debtPay', name: d.who, cur: d.cur, amount, wallet: debtWallet || d.wallet || '' }, 40000);
-      if (j.ok) { toast(v >= Math.abs(d.net) - 0.005 ? 'Долг закрыт' : 'Записал — осталось ' + money(Math.abs(d.net) - v, d.sym)); debtOpen = ''; } else toast(j.error || 'Не получилось');
+      const j = await api({ action: 'debtPay', name: d.who, cur: d.cur, amount, payCur: pc, wallet: wn }, 40000);
+      if (j.ok) { const rest = Math.abs(d.net) - vd; toast(rest <= Math.abs(d.net) * 0.01 + 0.005 ? 'Долг закрыт' : 'Записал — осталось ≈ ' + money(rest, d.sym)); debtOpen = ''; debtWallet = ''; } else toast(j.error || 'Не получилось');
       if (j.state) setState(j.state);
     } catch(e){ toast('Нет связи — попробуйте ещё раз'); }
     go.disabled = false; renderPanel();
