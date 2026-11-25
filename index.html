@@ -615,6 +615,12 @@ body.ny .micwrap::before{display:none}
 .wchk svg{width:18px;height:18px;stroke-width:3}
 .wrow.off .tile,.wrow.off .tx,.wrow.off .rt{opacity:.45}
 @media (max-width:360px){.wrow .tile{display:none}}
+/* история долга: строки-кнопки для правки */
+.dhist{display:flex;flex-direction:column;gap:2px}
+.dhist .dh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:40px;padding:6px 10px;margin:0 -10px;border-radius:10px;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.dhist button.dh:active{background:rgba(255,255,255,.06)}
+.dhist .dh svg{width:16px;height:16px;flex:0 0 auto;color:var(--gold);opacity:.8}
+@media (max-width:360px){.debt .dhist{margin-left:0}}
 
 /* ---------- 14 февраля ---------- */
 body.val{--rose:rgba(255,120,160,.22);padding-top:calc(var(--st) + 22px)}
@@ -1279,7 +1285,7 @@ function showMain(){
   renderQuote(false);
   renderAll();
 }
-const APP_V = '56';
+const APP_V = '57';
 $('setupBack').onclick = () => { $('setupBack').classList.add('hidden'); if (cfg) { showMain(); openPanel('set'); } };
 $('whoBtn').onclick = () => openPanel(panel === 'set' ? '' : 'set');
 $('fab').onclick = () => openPanel('');
@@ -1507,7 +1513,9 @@ function debtsHtml(){
   h += '<div class="debts">';
   ds.forEach(d => {
     const owe = d.net < 0, left = Math.abs(d.net), k = debtKey(d), open = debtOpen === k;
-    const hist = (d.hist || []).map(x => `${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}`).join('<br>');
+    // каждая строка истории долга — кнопка «Изменить»: сумма, дата, с кем, тип (взяли / вернули) или удалить
+    const hist = (d.hist || []).map(x => x.id ? `<button class="dh" data-edit="${x.id}" aria-label="Изменить запись: ${esc((HIST_L[x.t] || '') + ' ' + money(x.a, d.sym))}"><span>${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}</span>${ic('pen-line')}</button>`
+      : `<div class="dh"><span>${HIST_L[x.t] || ''} ${money(x.a, d.sym)} · ${esc(x.d)}</span></div>`).join('');
     h += `<div class="card debt ${owe ? 'owe' : 'lent'}">
       <div class="dtop"><span class="tile">${ic('hand-coins')}</span>
         <span class="tx"><span class="t1">${esc(d.who)}</span><span class="t2 ${owe ? 'neg' : 'pos'}">${owe ? 'Мы должны' : 'Должен(на) нам'}</span></span>
@@ -1519,11 +1527,12 @@ function debtsHtml(){
         <input class="field" id="dAmt" inputmode="decimal" autocomplete="off" value="${String(left).replace('.', ',')}">
         <div class="note" style="margin:6px 0 0">Можно вернуть часть — остаток долга останется.</div>
         ${ws.length > 1 ? `<label class="lbl">${owe ? 'Из кошелька' : 'В кошелёк'}</label><div class="chips">${ws.map(w => `<button class="chip ${w.name === cw ? 'on' : ''}" data-dw="${esc(w.name)}">${esc(w.name)}</button>`).join('')}</div>` : ''}
-        <div class="btns"><button class="btn primary block" id="dGo" data-dk="${esc(k)}">${ic('check')}Записать возврат</button></div></div>`;
-    } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Долг оплачен' : 'Нам вернули'}</button><button class="btn ghost" data-dhide="${esc(k)}" aria-label="Убрать долг из списка" title="Убрать из списка">${ic('trash-2')}</button></div>`;
+        <div class="btns"><button class="btn primary block" id="dGo" data-dk="${esc(k)}">${ic('check')}Записать возврат</button></div>
+        <div class="btns" style="margin-top:8px"><button class="btn ghost block" id="dCancel">Отмена</button></div></div>`;
+    } else h += `<div class="btns"><button class="btn ${owe ? 'primary' : ''} block" data-dpay="${esc(k)}">${ic('check')}${owe ? 'Вернуть долг' : 'Нам вернули'}</button><button class="btn ghost" data-dhide="${esc(k)}" aria-label="Убрать долг из списка" title="Убрать из списка">${ic('trash-2')}</button></div>`;
     h += '</div>';
   });
-  return h + `</div><div class="note">Голосом тоже можно: «вернули Насте 700» — сумма долга уменьшится сама.</div>`;
+  return h + `</div><div class="note">Нажмите на строку в истории долга, чтобы изменить сумму, дату или удалить её. Голосом тоже можно: «вернули Насте 700» — долг уменьшится сам.</div>`;
 }
 function bindDebts(root){
   root.querySelectorAll('[data-dpay]').forEach(b => b.onclick = () => { debtOpen = b.dataset.dpay; debtWallet = ''; renderPanel(); const f = $('dAmt'); if (f) { f.focus(); f.select(); } });
@@ -1535,6 +1544,8 @@ function bindDebts(root){
     catch(e){ toast('Нет связи — попробуйте ещё раз'); }
     renderPanel();
   });
+  root.querySelectorAll('.debts [data-edit]').forEach(b => b.onclick = e => { e.stopPropagation(); openEdit(Number(b.dataset.edit)); });
+  const dc = root.querySelector('#dCancel'); if (dc) dc.onclick = () => { debtOpen = ''; renderPanel(); };
   root.querySelectorAll('[data-dw]').forEach(b => b.onclick = () => { debtWallet = b.dataset.dw; root.querySelectorAll('[data-dw]').forEach(x => x.classList.toggle('on', x === b)); });
   const go = root.querySelector('#dGo');
   if (go) go.onclick = async () => {
@@ -2820,7 +2831,7 @@ function demoApi(b){
       { name: 'Здоровье', icon: '💊', color: '#46d08c', sum: 120, cats: [{ name: 'Аптека', sum: 120, items: [['витамины', 120]] }] },
       { name: 'Прочее', icon: '•', color: '#888', sum: 106, cats: [{ name: 'Прочее', sum: 106, items: [['сигареты', 76], ['пакет', 30]] }] }] }],
     cats: [['Базовые продукты','Еда'],['Кафе и рестораны','Еда'],['Вкусняшки и баловство','Еда'],['Алкоголь','Еда'],['Бытовая химия и хозтовары','Дом и быт'],['Квартира и коммуналка','Дом и быт'],['Связь и интернет','Дом и быт'],['Ремонт и мебель','Дом и быт'],['Детские товары','Ребёнок'],['Аптека','Здоровье'],['Врачи и анализы','Здоровье'],['Спорт','Здоровье'],['Авто и топливо','Транспорт'],['Такси и транспорт','Транспорт'],['Одежда и обувь','Одежда и обувь'],['Красота и уход','Красота и уход'],['Кино, концерты, отдых','Развлечения'],['Подписки','Развлечения'],['Хобби','Развлечения'],['Подарки','Подарки'],['Подарки друг другу','Подарки'],['Документы и госуслуги','Документы и услуги'],['Банк и комиссии','Документы и услуги'],['Долги и кредиты','Долги и кредиты'],['Налоги','Работа'],['Работа и бизнес','Работа'],['Техника и крупные покупки','Крупные покупки'],['Питомцы','Питомцы'],['Курение','Курение'],['Прочее','Прочее'],['Неучтённые траты','Прочее']].map(c => ({ n: c[0], k: 'расход', s: c[1] })).concat(['Работа / клиенты','Подарки и помощь','Прочий доход','Излишек по сверке'].map(n => ({ n, k: 'доход', s: 'Доходы' }))),
-    debts: [{ line: '🔴 Мы должны Настя 1 300 р. ПМР', who: 'Настя', cur: 'PRB', sym: 'р. ПМР', net: -1300, wallet: 'Наличные ПМР', hist: [{ t: 'долг_взяли', a: 2000, d: '07.11', w: 'Юлия' }, { t: 'возврат_отдали', a: 700, d: '08.11', w: 'Сергей' }] }, { line: '🟢 Саша должен нам 500 р. ПМР', who: 'Саша', cur: 'PRB', sym: 'р. ПМР', net: 500, wallet: 'Наличные ПМР', hist: [{ t: 'долг_дали', a: 500, d: '02.11', w: 'Сергей' }] }] };
+    debts: [{ line: '🔴 Мы должны Настя 1 300 р. ПМР', who: 'Настя', cur: 'PRB', sym: 'р. ПМР', net: -1300, wallet: 'Наличные ПМР', hist: [{ id: 9, t: 'долг_взяли', a: 2000, d: '07.11', w: 'Юлия' }, { id: 10, t: 'возврат_отдали', a: 700, d: '08.11', w: 'Сергей' }] }, { line: '🟢 Саша должен нам 500 р. ПМР', who: 'Саша', cur: 'PRB', sym: 'р. ПМР', net: 500, wallet: 'Наличные ПМР', hist: [{ id: 6, t: 'долг_дали', a: 500, d: '02.11', w: 'Сергей' }] }] };
   return new Promise(r => setTimeout(() => {
     if (b.action === 'add' && b.kind === 'voice' && /[?&]slowai\b/.test(location.search) && !st.inbox.some(x => x.cid === b.cid)) {
       st.inbox.push({ cid: b.cid, who: cfg.who, kind: 'voice', status: 'ждёт', tries: 1, at: new Date().toTimeString().slice(0, 5), next: 60 });
